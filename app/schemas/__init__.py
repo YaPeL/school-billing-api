@@ -1,3 +1,4 @@
+from app.schemas.auth import LoginRequest, Token, UserClaims
 from app.schemas.invoice import InvoiceCreate, InvoiceRead, InvoiceUpdate
 from app.schemas.payment import PaymentCreate, PaymentRead, PaymentUpdate
 from app.schemas.school import SchoolCreate, SchoolRead, SchoolUpdate
@@ -21,4 +22,7 @@ __all__ = [
     "InvoiceSummary",
     "StudentStatement",
     "SchoolStatement",
+    "LoginRequest",
+    "Token",
+    "UserClaims",
 ]

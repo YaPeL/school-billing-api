@@ -10,6 +10,7 @@ import httpx
 import pytest
 from sqlalchemy.orm import Session
 
+from app.core.settings import settings
 from app.db.session import get_db
 from app.main import app
 from app.schemas.statement import StatementTotals, StudentStatement
@@ -23,7 +24,6 @@ def anyio_backend() -> str:
 @pytest.fixture
 def override_db() -> Generator[None, None, None]:
     def override_get_db() -> Generator[Session, None, None]:
-        # We don't want real DB access in smoke tests.
         yield MagicMock(spec=Session)
 
     app.dependency_overrides[get_db] = override_get_db
@@ -50,10 +50,37 @@ async def test_health_endpoint_ok(client: httpx.AsyncClient) -> None:
 
 @pytest.mark.smoke
 @pytest.mark.anyio
-async def test_create_school_endpoint_happy_path(
+async def test_create_school_requires_auth(client: httpx.AsyncClient) -> None:
+    response = await client.post("/schools", json={"name": "Springfield Elementary"})
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Not authenticated"}
+
+
+@pytest.mark.smoke
+@pytest.mark.anyio
+async def test_auth_login_returns_token(
     client: httpx.AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    monkeypatch.setattr(settings, "admin_password", "test-pass")
+
+    response = await client.post("/auth/login", json={"username": "admin", "password": "test-pass"})
+
+    body = response.json()
+    assert response.status_code == 200
+    assert body["token_type"] == "bearer"
+    assert isinstance(body["access_token"], str)
+    assert body["access_token"]
+
+
+@pytest.mark.smoke
+@pytest.mark.anyio
+async def test_create_school_endpoint_happy_path_with_admin_token(
+    client: httpx.AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "admin_password", "test-pass")
+
     school_id = uuid4()
     school = SimpleNamespace(id=school_id, name="Springfield Elementary", created_at=None, updated_at=None)
 
@@ -61,7 +88,14 @@ async def test_create_school_endpoint_happy_path(
 
     monkeypatch.setattr(school_dal, "create_school", lambda *_args, **_kwargs: school)
 
-    response = await client.post("/schools", json={"name": "Springfield Elementary"})
+    login_response = await client.post("/auth/login", json={"username": "admin", "password": "test-pass"})
+    token = login_response.json()["access_token"]
+
+    response = await client.post(
+        "/schools",
+        json={"name": "Springfield Elementary"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
 
     assert response.status_code == 200
     assert response.json() == {

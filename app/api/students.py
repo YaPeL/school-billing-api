@@ -7,28 +7,31 @@ from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.constants import DEFAULT_LIMIT, DEFAULT_OFFSET, MAX_LIMIT, STUDENTS
+from app.api.deps import require_admin
 from app.api.exceptions import NotFoundError
 from app.dal import student as student_dal
 from app.dal._types import StudentCreate as DalStudentCreate
 from app.dal._types import StudentUpdate as DalStudentUpdate
 from app.db.session import get_db
 from app.schemas import StudentCreate, StudentRead, StudentStatement, StudentUpdate
+from app.schemas.auth import UserClaims
 from app.services import statements as statement_service
 
 router = APIRouter(prefix="/students", tags=["students"])
 
 DbSession = Annotated[Session, Depends(get_db)]
+AdminUser = Annotated[UserClaims, Depends(require_admin)]
 
 
 @router.post("", response_model=StudentRead)
-def create_student(student_in: StudentCreate, session: DbSession) -> StudentRead:
+async def create_student(student_in: StudentCreate, session: DbSession, _admin: AdminUser) -> StudentRead:
     payload = cast(DalStudentCreate, student_in.model_dump())
     student = student_dal.create_student(session, data=payload)
     return StudentRead.model_validate(student)
 
 
 @router.get("", response_model=list[StudentRead])
-def list_students(
+async def list_students(
     session: DbSession,
     offset: int = Query(default=DEFAULT_OFFSET, ge=0),
     limit: int = Query(default=DEFAULT_LIMIT, ge=1, le=MAX_LIMIT),
@@ -38,7 +41,7 @@ def list_students(
 
 
 @router.get("/{student_id}", response_model=StudentRead)
-def get_student(student_id: UUID, session: DbSession) -> StudentRead:
+async def get_student(student_id: UUID, session: DbSession) -> StudentRead:
     student = student_dal.get_student_by_id(session, student_id=student_id)
     if student is None:
         raise NotFoundError(STUDENTS, str(student_id))
@@ -46,7 +49,9 @@ def get_student(student_id: UUID, session: DbSession) -> StudentRead:
 
 
 @router.patch("/{student_id}", response_model=StudentRead)
-def patch_student(student_id: UUID, student_in: StudentUpdate, session: DbSession) -> StudentRead:
+async def patch_student(
+    student_id: UUID, student_in: StudentUpdate, session: DbSession, _admin: AdminUser
+) -> StudentRead:
     payload = cast(DalStudentUpdate, student_in.model_dump(exclude_unset=True))
     student = student_dal.update_student(session, student_id=student_id, data=payload)
     if student is None:
@@ -55,7 +60,7 @@ def patch_student(student_id: UUID, student_in: StudentUpdate, session: DbSessio
 
 
 @router.delete("/{student_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_student(student_id: UUID, session: DbSession) -> Response:
+async def delete_student(student_id: UUID, session: DbSession, _admin: AdminUser) -> Response:
     deleted = student_dal.delete_student(session, student_id=student_id)
     if not deleted:
         raise NotFoundError(STUDENTS, str(student_id))
@@ -63,7 +68,7 @@ def delete_student(student_id: UUID, session: DbSession) -> Response:
 
 
 @router.get("/{student_id}/statement", response_model=StudentStatement)
-def get_student_statement(student_id: UUID, session: DbSession) -> StudentStatement:
+async def get_student_statement(student_id: UUID, session: DbSession) -> StudentStatement:
     try:
         return statement_service.get_student_statement(session, student_id=student_id)
     except ValueError as exc:

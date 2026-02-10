@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import logging
+from typing import Any, cast
 
 from fastapi import FastAPI
 
+from app.api.auth import router as auth_router
 from app.api.exception_handlers import not_found_error_handler
 from app.api.exceptions import NotFoundError
 from app.api.health import router as health_router
@@ -25,12 +27,13 @@ app.middleware("http")(request_logging_middleware)
 
 app.include_router(health_router, tags=["health"])
 app.include_router(metrics_router, tags=["metrics"])
+app.include_router(auth_router)
 app.include_router(schools_router)
 app.include_router(students_router)
 app.include_router(invoices_router)
 app.include_router(payments_router)
 
-app.add_exception_handler(NotFoundError, not_found_error_handler)
+app.add_exception_handler(NotFoundError, cast(Any, not_found_error_handler))
 
 if settings.jwt_secret == "change_me":
     log.warning("JWT_SECRET is set to 'change_me' (demo default). Do not use in production.")

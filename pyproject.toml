@@ -15,6 +15,7 @@ pydantic-settings = "^2.4.0"
 
 sqlalchemy = "^2.0.0"
 psycopg = {extras = ["binary"], version = "^3.2.0"}
+alembic = "^1.14.0"
 
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 
@@ -36,6 +37,11 @@ markers = [
   "integration: tests that hit a real db"
 ]
 addopts = "-q"
+
+[tool.poetry.scripts]
+db-upgrade = "app.db.cli:db_upgrade"
+db-revision = "app.db.cli:db_revision"
+db-seed = "app.db.cli:db_seed"
 
 [tool.ruff]
 line-length = 120
@@ -59,4 +65,8 @@ exclude = [
 
 [[tool.mypy.overrides]]
 module = ["uuid_extensions"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["alembic", "alembic.*"]
 ignore_missing_imports = true

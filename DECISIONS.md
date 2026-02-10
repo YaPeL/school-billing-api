@@ -1,7 +1,7 @@
 # DECISIONS
 
 - Payments are first-class: invoices can have multiple payments (partial payments supported).
-- Invoice status is derived from payments (PENDING/PARTIAL/PAID).
+- Invoice status is derived from payments; overpaid invoices use `CREDIT` status (PENDING/PARTIAL/PAID/CREDIT).
 - DAL is the only layer touching SQLAlchemy Session; services mock DAL in smoke tests.
 - Primary keys for School/Student/Invoice/Payment use UUIDv7; all related foreign keys are UUID.
 - DAL create/update inputs use TypedDict payloads instead of multiple positional/keyword parameters.

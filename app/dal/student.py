@@ -24,6 +24,11 @@ def list_students(session: Session, *, offset: int = 0, limit: int = 100) -> lis
     return list(session.scalars(stmt))
 
 
+def list_students_by_school_id(session: Session, school_id: uuid.UUID) -> list[Student]:
+    stmt = select(Student).where(Student.school_id == school_id)
+    return list(session.scalars(stmt))
+
+
 def update_student(
     session: Session,
     student_id: uuid.UUID,

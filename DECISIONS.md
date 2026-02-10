@@ -7,3 +7,4 @@
 - DAL create/update inputs use TypedDict payloads instead of multiple positional/keyword parameters.
 - Auth is demo-basic JWT with a role claim (admin). No user table unless needed.
 - Observability is free and simple: structured logs, /health, /health/db, /metrics.
+- API smoke tests for HTTP routes use `TestClient`; on Python 3.13 they are skip-guarded because the current FastAPI/Starlette/AnyIO stack hangs in this environment.

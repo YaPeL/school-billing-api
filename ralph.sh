@@ -9,13 +9,13 @@ CODEX_ARGS=(exec --cd "$ROOT_DIR" --full-auto --model "$MODEL")
 
 run_codex () {
   local task_file="$1"
-  echo
-  echo "== Task: ${task_file} =="
-  echo
+  echo "== Starting Codex for ${task_file} =="
   codex "${CODEX_ARGS[@]}" "$(cat PROMPT.md)
 
 $(cat "${task_file}")"
+  echo "== Codex finished for ${task_file} =="
 }
+
 
 run_checks () {
   echo
@@ -27,28 +27,50 @@ run_checks () {
   poetry run pytest -m smoke || true
 }
 
+run_checks () {
+  echo
+  echo "== Local checks =="
+  echo
+  poetry run ruff check .
+  poetry run ruff format .
+  poetry run mypy .
+  poetry run pytest -m smoke
+}
+
 iterate_task () {
   local task_file="$1"
+
   for i in $(seq 1 "$RETRIES"); do
     echo
     echo "---- Attempt $i/$RETRIES for ${task_file} ----"
     echo
 
-    run_codex "$task_file"
-    run_checks
+    # Snapshot before
+    local before
+    before="$(git diff --stat)"
 
+    run_codex "$task_file"
+
+    # If nothing changed, stop retrying
     if git diff --quiet; then
       echo "No repo changes after this attempt."
       break
     fi
+
+    # If the diff didn't change compared to previous attempt, stop retrying
+    local after
+    after="$(git diff --stat)"
+    if [[ "$before" == "$after" ]]; then
+      echo "No new changes compared to previous attempt."
+      break
+    fi
+
+    # If checks pass, we're done with this task
+    if run_checks; then
+      echo "Checks passed. Task considered done."
+      break
+    else
+      echo "Checks failed. Retrying..."
+    fi
   done
 }
-
-if [[ "$#" -eq 0 ]]; then
-  echo "Usage: RETRIES=10 ./ralph.sh TASK_03_REFACTOR.md [TASK_04_...md]"
-  exit 1
-fi
-
-for task in "$@"; do
-  iterate_task "$task"
-done

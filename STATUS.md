@@ -16,6 +16,7 @@
   - poetry run pytest -m "smoke or integration" (optional)
 
 ## Implemented
+- PLAN milestone updated: project bootstrap checkbox "Initialize Poetry project + FastAPI skeleton + app/ structure" marked complete
 - Bootstrap project structure
 - Settings + logging middleware
 - /health, /health/db, /metrics
@@ -46,6 +47,7 @@
 - Write endpoints (`POST/PATCH/DELETE`) for schools/students/invoices/payments now require admin bearer token; read endpoints remain public
 - API smoke tests added with HTTPX `AsyncClient` for `/health`, auth/login, protected writes, and statement happy-path using monkeypatched DAL/services (no DB required)
 - Smoke tests for DB CLI entrypoints added (alembic command invocation and seed transaction handling) with subprocess/session mocking
+- Smoke test added to validate FastAPI skeleton wiring (`app.main.app` title + key routes) without DB access
 
 ## Pending
 - See PLAN.md

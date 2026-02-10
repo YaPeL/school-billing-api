@@ -1,7 +1,7 @@
 # PLAN
 
 ## 0. Project bootstrap
-- [ ] Initialize Poetry project + FastAPI skeleton + app/ structure
+- [x] Initialize Poetry project + FastAPI skeleton + app/ structure
 - [ ] Configure ruff, mypy, pytest
 - [ ] Configure pytest markers: smoke, integration
 - [ ] Configure pre-commit: ruff, mypy, pytest -m smoke

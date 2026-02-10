@@ -13,7 +13,7 @@
 
 ## 1. DB & models
 - [ ] SQLAlchemy engine/session dependency
-- [ ] ORM models: School, Student, Invoice, Payment + relationships + constraints
+- [x] ORM models: School, Student, Invoice, Payment + relationships + constraints
 - [ ] (Optional) Alembic + initial migration
 
 ## 2. Auth (basic, demo-friendly)
@@ -22,7 +22,7 @@
 
 ## 3. Schemas + DAL + Services
 - [ ] Pydantic schemas (create/update/read) for all entities
-- [ ] DAL functions (only layer touching Session)
+- [x] DAL functions (only layer touching Session)
 - [ ] Services: business rules (invoice balances, statements)
 
 ## 4. API
@@ -41,7 +41,7 @@
 - [ ] README: seed command + example IDs
 
 ## 6. Tests
-- [ ] Smoke unit tests mocking DAL (fast, no DB)
+- [x] Smoke unit tests mocking DAL (fast, no DB)
 - [ ] (Optional) Integration tests using PostgreSQL
 
 ## 7. Extras (optional)

@@ -19,6 +19,7 @@ psycopg = {extras = ["binary"], version = "^3.2.0"}
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 
 prometheus-client = "^0.20.0"
+uuid7 = "^0.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.0"

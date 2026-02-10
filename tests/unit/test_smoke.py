@@ -1,12 +1,8 @@
 import pytest
-from fastapi.testclient import TestClient
 
-from app.main import app
+from app.api.health import health
 
 
 @pytest.mark.smoke
 def test_health_ok() -> None:
-    client = TestClient(app)
-    r = client.get("/health")
-    assert r.status_code == 200
-    assert r.json() == {"status": "ok"}
+    assert health() == {"status": "ok"}

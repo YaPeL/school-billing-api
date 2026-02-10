@@ -4,5 +4,6 @@ from app.api.health import health
 
 
 @pytest.mark.smoke
-def test_health_ok() -> None:
-    assert health() == {"status": "ok"}
+@pytest.mark.anyio
+async def test_health_ok() -> None:
+    assert await health() == {"status": "ok"}

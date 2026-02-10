@@ -17,8 +17,8 @@
 - [ ] (Optional) Alembic + initial migration
 
 ## 2. Auth (basic, demo-friendly)
-- [ ] /auth/login: simple JWT (include role claim)
-- [ ] require_auth + require_role("admin")
+- [x] /auth/login: simple JWT (include role claim)
+- [x] require_auth + require_role("admin")
 
 ## 3. Schemas + DAL + Services
 - [x] Pydantic schemas (create/update/read) for all entities (Pydantic v2, Decimal amounts, UUID IDs, timestamp fields on read models)

@@ -33,7 +33,9 @@
 - Smoke tests verify statement business rules and statement service aggregation using mocked DAL (no DB)
 - FastAPI API routes wired for CRUD on `/schools`, `/students`, `/invoices`, `/payments` with offset/limit pagination and 404 handling
 - Statement endpoints wired to services: `GET /students/{student_id}/statement` and `GET /schools/{school_id}/statement`
-- API smoke tests added with `TestClient` for `/health`, CRUD create happy-path, and statement happy-path using monkeypatched DAL/services (no DB required)
+- Demo JWT auth added: `POST /auth/login` issuing bearer token with `sub`, `role=admin`, `exp`
+- Write endpoints (`POST/PATCH/DELETE`) for schools/students/invoices/payments now require admin bearer token; read endpoints remain public
+- API smoke tests added with HTTPX `AsyncClient` for `/health`, auth/login, protected writes, and statement happy-path using monkeypatched DAL/services (no DB required)
 
 ## Pending
 - See PLAN.md

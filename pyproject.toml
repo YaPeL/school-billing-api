@@ -57,3 +57,6 @@ exclude = [
   "^tests/"
 ]
 
+[[tool.mypy.overrides]]
+module = ["uuid_extensions"]
+ignore_missing_imports = true

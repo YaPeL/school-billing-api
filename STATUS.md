@@ -40,6 +40,7 @@
 - Smoke tests verify metadata registration, FK indexing, relationships, DAL session usage, and schema validation without DB
 - Smoke tests verify statement business rules and statement service aggregation using mocked DAL (no DB)
 - FastAPI API routes wired for CRUD on `/schools`, `/students`, `/invoices`, `/payments` with offset/limit pagination and 404 handling
+- Payments-by-invoice endpoint wired: `GET /invoices/{invoice_id}/payments` (returns payment list for a specific invoice)
 - Statement endpoints wired to services: `GET /students/{student_id}/statement` and `GET /schools/{school_id}/statement`
 - Demo JWT auth added: `POST /auth/login` issuing bearer token with `sub`, `role=admin`, `exp`
 - Write endpoints (`POST/PATCH/DELETE`) for schools/students/invoices/payments now require admin bearer token; read endpoints remain public

@@ -149,3 +149,47 @@ async def test_student_statement_endpoint_happy_path(
         },
         "invoices": [],
     }
+
+
+@pytest.mark.smoke
+@pytest.mark.anyio
+async def test_get_invoice_payments_endpoint_happy_path(
+    client: httpx.AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    invoice_id = uuid4()
+    payment_id = uuid4()
+
+    invoice = SimpleNamespace(id=invoice_id)
+    payment = SimpleNamespace(
+        id=payment_id,
+        invoice_id=invoice_id,
+        amount=Decimal("30.00"),
+        method="card",
+        reference="pay-123",
+        paid_at=None,
+        created_at=None,
+        updated_at=None,
+    )
+
+    import app.dal.invoice as invoice_dal
+    import app.dal.payment as payment_dal
+
+    monkeypatch.setattr(invoice_dal, "get_invoice_by_id", lambda *_args, **_kwargs: invoice)
+    monkeypatch.setattr(payment_dal, "list_payments_by_invoice_id", lambda *_args, **_kwargs: [payment])
+
+    response = await client.get(f"/invoices/{invoice_id}/payments")
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "id": str(payment_id),
+            "invoice_id": str(invoice_id),
+            "amount": "30.00",
+            "method": "card",
+            "reference": "pay-123",
+            "paid_at": None,
+            "created_at": None,
+            "updated_at": None,
+        }
+    ]

@@ -10,10 +10,11 @@ from app.api.constants import DEFAULT_LIMIT, DEFAULT_OFFSET, INVOICES, MAX_LIMIT
 from app.api.deps import require_admin
 from app.api.exceptions import NotFoundError
 from app.dal import invoice as invoice_dal
+from app.dal import payment as payment_dal
 from app.dal._types import InvoiceCreate as DalInvoiceCreate
 from app.dal._types import InvoiceUpdate as DalInvoiceUpdate
 from app.db.session import get_db
-from app.schemas import InvoiceCreate, InvoiceRead, InvoiceUpdate
+from app.schemas import InvoiceCreate, InvoiceRead, InvoiceUpdate, PaymentRead
 from app.schemas.auth import UserClaims
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
@@ -45,6 +46,16 @@ async def get_invoice(invoice_id: UUID, session: DbSession) -> InvoiceRead:
     if invoice is None:
         raise NotFoundError(INVOICES, str(invoice_id))
     return InvoiceRead.model_validate(invoice)
+
+
+@router.get("/{invoice_id}/payments", response_model=list[PaymentRead])
+async def list_invoice_payments(invoice_id: UUID, session: DbSession) -> list[PaymentRead]:
+    invoice = invoice_dal.get_invoice_by_id(session, invoice_id=invoice_id)
+    if invoice is None:
+        raise NotFoundError(INVOICES, str(invoice_id))
+
+    payments = payment_dal.list_payments_by_invoice_id(session, invoice_id=invoice_id)
+    return [PaymentRead.model_validate(payment) for payment in payments]
 
 
 @router.patch("/{invoice_id}", response_model=InvoiceRead)

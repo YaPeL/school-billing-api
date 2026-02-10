@@ -32,7 +32,7 @@
 - [x] CRUD /payments
 - [ ] Payments:
   - [x] POST /payments
-  - [ ] GET /invoices/{id}/payments
+  - [x] GET /invoices/{id}/payments
   - [x] (Optional) DELETE /payments/{id}
 - [x] GET /students/{id}/statement
 - [x] GET /schools/{id}/statement

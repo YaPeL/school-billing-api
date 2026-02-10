@@ -31,6 +31,9 @@
 - Statement schemas under `app/schemas/statement.py` (`InvoiceSummary`, `StudentStatement`, `SchoolStatement`)
 - Smoke tests verify metadata registration, FK indexing, relationships, DAL session usage, and schema validation without DB
 - Smoke tests verify statement business rules and statement service aggregation using mocked DAL (no DB)
+- FastAPI API routes wired for CRUD on `/schools`, `/students`, `/invoices`, `/payments` with offset/limit pagination and 404 handling
+- Statement endpoints wired to services: `GET /students/{student_id}/statement` and `GET /schools/{school_id}/statement`
+- API smoke tests added with `TestClient` for `/health`, CRUD create happy-path, and statement happy-path using monkeypatched DAL/services (no DB required)
 
 ## Pending
 - See PLAN.md

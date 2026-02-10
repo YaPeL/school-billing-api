@@ -26,15 +26,16 @@
 - [x] Services: business rules (invoice balances, statements)
 
 ## 4. API
-- [ ] CRUD /schools
-- [ ] CRUD /students
-- [ ] CRUD /invoices
+- [x] CRUD /schools
+- [x] CRUD /students
+- [x] CRUD /invoices
+- [x] CRUD /payments
 - [ ] Payments:
-  - [ ] POST /payments
+  - [x] POST /payments
   - [ ] GET /invoices/{id}/payments
-  - [ ] (Optional) DELETE /payments/{id}
-- [ ] GET /students/{id}/statement
-- [ ] GET /schools/{id}/statement
+  - [x] (Optional) DELETE /payments/{id}
+- [x] GET /students/{id}/statement
+- [x] GET /schools/{id}/statement
 
 ## 5. Seed data
 - [ ] Idempotent seed script app/db/seed.py

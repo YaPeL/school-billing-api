@@ -6,6 +6,8 @@
   - pre-commit install
 - Run (local):
   - docker compose up -d db
+  - poetry run db-upgrade
+  - poetry run db-seed
   - poetry run uvicorn app.main:app --reload
 - Run (docker):
   - docker compose up --build
@@ -18,6 +20,12 @@
 - Settings + logging middleware
 - /health, /health/db, /metrics
 - SQLAlchemy typed ORM models for School/Student/Invoice/Payment with FK indexes and relationships
+- Alembic configured (`alembic/`, `alembic.ini`, env wired to `Base.metadata`) with initial migration for schools/students/invoices/payments
+- Poetry DB CLI scripts:
+  - `poetry run db-upgrade`
+  - `poetry run db-revision -m "msg"`
+  - `poetry run db-seed`
+- Local idempotent-ish seed script `app/db/seed.py` creating demo school/students/invoices/payments
 - UUIDv7 primary keys for School/Student/Invoice/Payment and UUID foreign keys across relationships
 - Pydantic v2 schemas for School/Student/Invoice/Payment (Create/Update/Read) under `app/schemas/`
 - Create schemas include only required fields; update schemas support partial updates (all fields optional)
@@ -36,6 +44,7 @@
 - Demo JWT auth added: `POST /auth/login` issuing bearer token with `sub`, `role=admin`, `exp`
 - Write endpoints (`POST/PATCH/DELETE`) for schools/students/invoices/payments now require admin bearer token; read endpoints remain public
 - API smoke tests added with HTTPX `AsyncClient` for `/health`, auth/login, protected writes, and statement happy-path using monkeypatched DAL/services (no DB required)
+- Smoke tests for DB CLI entrypoints added (alembic command invocation and seed transaction handling) with subprocess/session mocking
 
 ## Pending
 - See PLAN.md

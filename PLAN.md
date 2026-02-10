@@ -14,7 +14,7 @@
 ## 1. DB & models
 - [ ] SQLAlchemy engine/session dependency
 - [x] ORM models: School, Student, Invoice, Payment + relationships + constraints
-- [ ] (Optional) Alembic + initial migration
+- [x] (Optional) Alembic + initial migration
 
 ## 2. Auth (basic, demo-friendly)
 - [x] /auth/login: simple JWT (include role claim)
@@ -38,8 +38,8 @@
 - [x] GET /schools/{id}/statement
 
 ## 5. Seed data
-- [ ] Idempotent seed script app/db/seed.py
-- [ ] README: seed command + example IDs
+- [x] Idempotent seed script app/db/seed.py
+- [x] README: seed command + example IDs
 
 ## 6. Tests
 - [x] Smoke unit tests mocking DAL (fast, no DB)

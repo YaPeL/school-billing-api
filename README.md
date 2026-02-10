@@ -11,6 +11,8 @@
 
 ## Run (local)
 - docker compose up -d db
+- poetry run db-upgrade
+- poetry run db-seed
 - poetry run uvicorn app.main:app --reload
 
 Open:
@@ -36,3 +38,4 @@ Open:
 ## Notes
 - Observability: structured logs + /health + /metrics
 - Payments are first-class (partial payments supported)
+- Migrations are manual by design (they are not auto-run on app import/startup)

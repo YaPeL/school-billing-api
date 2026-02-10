@@ -1,4 +1,5 @@
 import uuid
+from collections.abc import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -30,6 +31,18 @@ def get_invoice_by_id(session: Session, invoice_id: uuid.UUID) -> Invoice | None
 
 def list_invoices(session: Session, *, offset: int = 0, limit: int = 100) -> list[Invoice]:
     stmt = select(Invoice).offset(offset).limit(limit)
+    return list(session.scalars(stmt))
+
+
+def list_invoices_by_student_id(session: Session, student_id: uuid.UUID) -> list[Invoice]:
+    stmt = select(Invoice).where(Invoice.student_id == student_id)
+    return list(session.scalars(stmt))
+
+
+def list_invoices_by_student_ids(session: Session, student_ids: Sequence[uuid.UUID]) -> list[Invoice]:
+    if not student_ids:
+        return []
+    stmt = select(Invoice).where(Invoice.student_id.in_(student_ids))
     return list(session.scalars(stmt))
 
 

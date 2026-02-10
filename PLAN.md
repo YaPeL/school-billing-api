@@ -23,7 +23,7 @@
 ## 3. Schemas + DAL + Services
 - [x] Pydantic schemas (create/update/read) for all entities (Pydantic v2, Decimal amounts, UUID IDs, timestamp fields on read models)
 - [x] DAL functions (only layer touching Session)
-- [ ] Services: business rules (invoice balances, statements)
+- [x] Services: business rules (invoice balances, statements)
 
 ## 4. API
 - [ ] CRUD /schools

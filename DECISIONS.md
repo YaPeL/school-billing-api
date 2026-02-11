@@ -14,3 +14,4 @@
 - API smoke tests for HTTP routes use HTTPX `AsyncClient` + `ASGITransport` (not `TestClient`) for Python 3.13 compatibility; DB access is mocked via dependency override.
 - 404 handling uses a custom `NotFoundError` with a global exception handler; routers raise `NotFoundError` instead of `HTTPException` for missing resources.
 - Pagination defaults are centralized (offset/limit/max) in `app/api/constants.py`.
+- DAL update inputs use TypedDict payloads (app/dal/update_types.py) derived from model_dump(exclude_unset=True).

@@ -2,17 +2,17 @@
 
 ## 0. Project bootstrap
 - [x] Initialize Poetry project + FastAPI skeleton + app/ structure
-- [ ] Configure ruff, mypy, pytest
-- [ ] Configure pytest markers: smoke, integration
-- [ ] Configure pre-commit: ruff, mypy, pytest -m smoke
-- [ ] Add Dockerfile + docker-compose (api + postgres)
-- [ ] Add settings (pydantic-settings)
-- [ ] Observability: structured logs + request_id + latency middleware
-- [ ] Add /health and /health/db
-- [ ] Add /metrics (Prometheus)
+- [x] Configure ruff, mypy, pytest
+- [x] Configure pytest markers: smoke, integration
+- [x] Configure pre-commit: ruff, mypy, pytest -m smoke
+- [x] Add Dockerfile + docker-compose (api + postgres)
+- [x] Add settings (pydantic-settings)
+- [x] Observability: structured logs + request_id + latency middleware
+- [x] Add /health and /health/db
+- [x] Add /metrics (Prometheus)
 
 ## 1. DB & models
-- [ ] SQLAlchemy engine/session dependency
+- [x] SQLAlchemy engine/session dependency
 - [x] ORM models: School, Student, Invoice, Payment + relationships + constraints
 - [x] (Optional) Alembic + initial migration
 
@@ -30,7 +30,7 @@
 - [x] CRUD /students
 - [x] CRUD /invoices
 - [x] CRUD /payments
-- [ ] Payments:
+- [x] Payments:
   - [x] POST /payments
   - [x] GET /invoices/{id}/payments
   - [x] (Optional) DELETE /payments/{id}
@@ -46,5 +46,5 @@
 - [ ] (Optional) Integration tests using PostgreSQL
 
 ## 7. Extras (optional)
-- [ ] Pagination on list endpoints
-- [ ] (Optional) OpenTelemetry local tracing (Jaeger)
+- [x] Pagination on list endpoints
+- [x] (Optional) OpenTelemetry local tracing (Jaeger)

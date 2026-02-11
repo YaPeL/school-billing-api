@@ -1,10 +1,10 @@
 import logging
 import time
-import uuid
 from collections.abc import Awaitable, Callable
 
 from fastapi import Request, Response
 from prometheus_client import Counter, Histogram
+from uuid_extensions import uuid7
 
 logger = logging.getLogger("app.request")
 
@@ -25,7 +25,7 @@ async def request_logging_middleware(
     request: Request,
     call_next: Callable[[Request], Awaitable[Response]],
 ) -> Response:
-    request_id = request.headers.get("x-request-id", str(uuid.uuid4()))
+    request_id = request.headers.get("x-request-id", str(uuid7()))
     start = time.perf_counter()
 
     try:

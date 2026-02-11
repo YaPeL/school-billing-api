@@ -23,6 +23,13 @@ Constraints:
 - Do not propose large scope expansions.
 - Do not suggest skipping tests.
 
+Review strictness:
+- Even if everything looks OK, still provide:
+  - 2 potential risks/edge cases to double-check
+  - 2 consistency checks (naming, status codes, pagination, typing)
+  - 1 small improvement suggestion (if any), otherwise say "No changes recommended".
+- If changes include tests, comment on test intent and what they do NOT cover.
+
 ## Run modes
 - If running `codex exec`: produce code changes that satisfy the provided TASK_*.md.
 - If running `codex review`: do not propose large refactors; focus on actionable findings.

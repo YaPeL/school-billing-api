@@ -4,8 +4,8 @@ from collections.abc import Sequence
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.dal._types import InvoiceCreate, InvoiceUpdate
-from app.models import Invoice
+from app.dal.update_types import InvoiceCreate, InvoiceUpdate
+from app.models.invoice import Invoice
 
 
 def create_invoice(session: Session, data: InvoiceCreate) -> Invoice:

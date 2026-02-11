@@ -3,8 +3,8 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.dal._types import StudentCreate, StudentUpdate
-from app.models import Student
+from app.dal.update_types import StudentCreate, StudentUpdate
+from app.models.student import Student
 
 
 def create_student(session: Session, data: StudentCreate) -> Student:
@@ -24,8 +24,10 @@ def list_students(session: Session, *, offset: int = 0, limit: int = 100) -> lis
     return list(session.scalars(stmt))
 
 
-def list_students_by_school_id(session: Session, school_id: uuid.UUID) -> list[Student]:
-    stmt = select(Student).where(Student.school_id == school_id)
+def list_students_by_school_id(
+    session: Session, school_id: uuid.UUID, offset: int = 0, limit: int = 100
+) -> list[Student]:
+    stmt = select(Student).where(Student.school_id == school_id).offset(offset).limit(limit)
     return list(session.scalars(stmt))
 
 

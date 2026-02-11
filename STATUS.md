@@ -16,6 +16,7 @@
   - poetry run pytest -m "smoke or integration" (optional)
 
 ## Implemented
+- PLAN milestone updated: project bootstrap checkbox "Initialize Poetry project + FastAPI skeleton + app/ structure" marked complete
 - Bootstrap project structure
 - Settings + logging middleware
 - /health, /health/db, /metrics
@@ -40,11 +41,13 @@
 - Smoke tests verify metadata registration, FK indexing, relationships, DAL session usage, and schema validation without DB
 - Smoke tests verify statement business rules and statement service aggregation using mocked DAL (no DB)
 - FastAPI API routes wired for CRUD on `/schools`, `/students`, `/invoices`, `/payments` with offset/limit pagination and 404 handling
+- Payments-by-invoice endpoint wired: `GET /invoices/{invoice_id}/payments` (returns payment list for a specific invoice)
 - Statement endpoints wired to services: `GET /students/{student_id}/statement` and `GET /schools/{school_id}/statement`
 - Demo JWT auth added: `POST /auth/login` issuing bearer token with `sub`, `role=admin`, `exp`
 - Write endpoints (`POST/PATCH/DELETE`) for schools/students/invoices/payments now require admin bearer token; read endpoints remain public
 - API smoke tests added with HTTPX `AsyncClient` for `/health`, auth/login, protected writes, and statement happy-path using monkeypatched DAL/services (no DB required)
 - Smoke tests for DB CLI entrypoints added (alembic command invocation and seed transaction handling) with subprocess/session mocking
+- Smoke test added to validate FastAPI skeleton wiring (`app.main.app` title + key routes) without DB access
 
 ## Pending
 - See PLAN.md

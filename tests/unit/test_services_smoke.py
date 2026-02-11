@@ -2,10 +2,10 @@ from datetime import date
 from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import MagicMock
-from uuid import uuid4
 
 import pytest
 from sqlalchemy.orm import Session
+from uuid_extensions import uuid7
 
 from app.domain.enums import InvoiceStatus
 from app.services import billing_rules
@@ -18,7 +18,7 @@ def _payment(amount: str, invoice_id: object) -> SimpleNamespace:
 
 @pytest.mark.smoke
 def test_business_rule_helpers_support_partial_paid_and_credit() -> None:
-    payments = [_payment("40.00", uuid4()), _payment("30.00", uuid4())]
+    payments = [_payment("40.00", uuid7()), _payment("30.00", uuid7())]
 
     assert billing_rules.paid_total(payments) == Decimal("70.00")
     assert billing_rules.balance_due(Decimal("100.00"), payments) == Decimal("30.00")
@@ -32,10 +32,10 @@ def test_business_rule_helpers_support_partial_paid_and_credit() -> None:
 @pytest.mark.smoke
 def test_get_student_statement_aggregates_totals_and_invoice_fields(monkeypatch: pytest.MonkeyPatch) -> None:
     session = MagicMock(spec=Session)
-    school_id = uuid4()
-    student_id = uuid4()
-    invoice_1_id = uuid4()
-    invoice_2_id = uuid4()
+    school_id = uuid7()
+    student_id = uuid7()
+    invoice_1_id = uuid7()
+    invoice_2_id = uuid7()
 
     student = SimpleNamespace(id=student_id, school_id=school_id, full_name="Ada Lovelace")
     invoices = [
@@ -85,11 +85,11 @@ def test_get_student_statement_aggregates_totals_and_invoice_fields(monkeypatch:
 @pytest.mark.smoke
 def test_get_school_statement_aggregates_across_students(monkeypatch: pytest.MonkeyPatch) -> None:
     session = MagicMock(spec=Session)
-    school_id = uuid4()
-    student_1_id = uuid4()
-    student_2_id = uuid4()
-    invoice_1_id = uuid4()
-    invoice_2_id = uuid4()
+    school_id = uuid7()
+    student_1_id = uuid7()
+    student_2_id = uuid7()
+    invoice_1_id = uuid7()
+    invoice_2_id = uuid7()
 
     school = SimpleNamespace(id=school_id, name="STEM Academy")
     students = [
@@ -138,13 +138,13 @@ def test_get_school_statement_aggregates_across_students(monkeypatch: pytest.Mon
 @pytest.mark.smoke
 def test_statement_services_raise_for_missing_entities(monkeypatch: pytest.MonkeyPatch) -> None:
     session = MagicMock(spec=Session)
-    missing_id = uuid4()
+    missing_id = uuid7()
 
-    import app.dal.school as school_dal
-    import app.dal.student as student_dal
+    import app.services.schools as school_service
+    import app.services.students as student_service
 
-    monkeypatch.setattr(student_dal, "get_student_by_id", lambda *_args, **_kwargs: None)
-    monkeypatch.setattr(school_dal, "get_school_by_id", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(student_service, "get_student_by_id", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(school_service, "get_school_by_id", lambda *_args, **_kwargs: None)
 
     with pytest.raises(ValueError):
         get_student_statement(session, missing_id)

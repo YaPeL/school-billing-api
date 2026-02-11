@@ -4,11 +4,11 @@ from collections.abc import Generator
 from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import MagicMock
-from uuid import uuid4
 
 import httpx
 import pytest
 from sqlalchemy.orm import Session
+from uuid_extensions import uuid7
 
 from app.core.settings import settings
 from app.db.session import get_db
@@ -81,7 +81,7 @@ async def test_create_school_endpoint_happy_path_with_admin_token(
 ) -> None:
     monkeypatch.setattr(settings, "admin_password", "test-pass")
 
-    school_id = uuid4()
+    school_id = uuid7()
     school = SimpleNamespace(id=school_id, name="Springfield Elementary", created_at=None, updated_at=None)
 
     import app.dal.school as school_dal
@@ -112,8 +112,8 @@ async def test_student_statement_endpoint_happy_path(
     client: httpx.AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    student_id = uuid4()
-    school_id = uuid4()
+    student_id = uuid7()
+    school_id = uuid7()
 
     statement = StudentStatement(
         student_id=student_id,
@@ -149,3 +149,47 @@ async def test_student_statement_endpoint_happy_path(
         },
         "invoices": [],
     }
+
+
+@pytest.mark.smoke
+@pytest.mark.anyio
+async def test_get_invoice_payments_endpoint_happy_path(
+    client: httpx.AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    invoice_id = uuid7()
+    payment_id = uuid7()
+
+    invoice = SimpleNamespace(id=invoice_id)
+    payment = SimpleNamespace(
+        id=payment_id,
+        invoice_id=invoice_id,
+        amount=Decimal("30.00"),
+        method="card",
+        reference="pay-123",
+        paid_at=None,
+        created_at=None,
+        updated_at=None,
+    )
+
+    import app.services.invoices as invoice_service
+    import app.services.payments as payment_service
+
+    monkeypatch.setattr(invoice_service, "get_invoice_by_id", lambda *_args, **_kwargs: invoice)
+    monkeypatch.setattr(payment_service, "list_payments_by_invoice_id", lambda *_args, **_kwargs: [payment])
+
+    response = await client.get(f"/invoices/{invoice_id}/payments")
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "id": str(payment_id),
+            "invoice_id": str(invoice_id),
+            "amount": "30.00",
+            "method": "card",
+            "reference": "pay-123",
+            "paid_at": None,
+            "created_at": None,
+            "updated_at": None,
+        }
+    ]

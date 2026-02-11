@@ -15,3 +15,4 @@
 - 404 handling uses a custom `NotFoundError` with a global exception handler; routers raise `NotFoundError` instead of `HTTPException` for missing resources.
 - Pagination defaults are centralized (offset/limit/max) in `app/api/constants.py`.
 - DAL update inputs use TypedDict payloads (app/dal/update_types.py) derived from model_dump(exclude_unset=True).
+- CI quality gates run in GitHub Actions on push/PR to `main` with Python 3.12 only (`ruff`, `mypy`, `pytest -m smoke`).

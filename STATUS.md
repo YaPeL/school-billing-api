@@ -14,6 +14,8 @@
 - Tests:
   - poetry run pytest -m smoke
   - poetry run pytest -m "smoke or integration" (optional)
+- CI:
+  - GitHub Actions workflow on push/PR to `main` (Python 3.12, ruff, mypy, smoke)
 
 ## Implemented
 - PLAN milestone updated: project bootstrap checkbox "Initialize Poetry project + FastAPI skeleton + app/ structure" marked complete
@@ -48,6 +50,10 @@
 - API smoke tests added with HTTPX `AsyncClient` for `/health`, auth/login, protected writes, and statement happy-path using monkeypatched DAL/services (no DB required)
 - Smoke tests for DB CLI entrypoints added (alembic command invocation and seed transaction handling) with subprocess/session mocking
 - Smoke test added to validate FastAPI skeleton wiring (`app.main.app` title + key routes) without DB access
+- GitHub Actions CI workflow added at `.github/workflows/ci.yml` (Python 3.12 only, Poetry install, ruff, mypy, smoke tests)
+- README polished with CI/type-check/tests badges, clearer quickstart, and bearer-auth examples for protected endpoints
+- Smoke test added to verify CI workflow quality gates exist (`tests/unit/test_ci_smoke.py`)
 
 ## Pending
-- See PLAN.md
+- Integration tests against a real PostgreSQL database, marked with `@pytest.mark.integration`
+- Statement caching design: define what to cache and invalidation strategy when invoices/payments change

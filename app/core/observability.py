@@ -27,6 +27,7 @@ async def request_logging_middleware(
 ) -> Response:
     request_id = request.headers.get("x-request-id", str(uuid7()))
     start = time.perf_counter()
+    response: Response | None = None
 
     try:
         response = await call_next(request)
@@ -49,6 +50,9 @@ async def request_logging_middleware(
                 "latency_ms": round(elapsed * 1000, 2),
             },
         )
+
+    if response is None:
+        raise RuntimeError("request pipeline returned no response")
 
     response.headers["x-request-id"] = request_id
     return response

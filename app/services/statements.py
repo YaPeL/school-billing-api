@@ -5,6 +5,8 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from app.api.constants import SCHOOLS, STUDENTS
+from app.api.exceptions import NotFoundError
 from app.dal import invoice as invoice_dal
 from app.dal import payment as payment_dal
 from app.dal import school as school_dal
@@ -18,7 +20,7 @@ from app.services.billing_rules import ZERO, balance_due, credit_amount, invoice
 def get_student_statement(session: Session, student_id: UUID) -> StudentStatement:
     student = student_dal.get_student_by_id(session, student_id=student_id)
     if student is None:
-        raise ValueError(f"student {student_id} not found")
+        raise NotFoundError(STUDENTS, str(student_id))
 
     invoices = invoice_dal.list_invoices_by_student_id(session, student_id=student.id)
     payments_by_invoice = _payments_by_invoice(session, invoices)
@@ -35,7 +37,7 @@ def get_student_statement(session: Session, student_id: UUID) -> StudentStatemen
 def get_school_statement(session: Session, school_id: UUID) -> SchoolStatement:
     school = school_dal.get_school_by_id(session, school_id=school_id)
     if school is None:
-        raise ValueError(f"school {school_id} not found")
+        raise NotFoundError(SCHOOLS, str(school_id))
 
     students = student_dal.list_students_by_school_id(session, school_id=school.id)
     student_ids = [student.id for student in students]

@@ -19,6 +19,14 @@ def list_invoices(session: Session, *, offset: int, limit: int) -> list[Invoice]
     return invoice_dal.list_invoices(session, offset=offset, limit=limit)
 
 
+def list_invoices_by_student_id(session: Session, *, student_id: UUID) -> list[Invoice]:
+    return invoice_dal.list_invoices_by_student_id(session, student_id)
+
+
+def list_invoices_by_student_ids(session: Session, *, student_ids: list[UUID]) -> list[Invoice]:
+    return invoice_dal.list_invoices_by_student_ids(session, student_ids)
+
+
 def get_invoice_by_id(session: Session, invoice_id: UUID) -> Invoice:
     invoice = invoice_dal.get_invoice_by_id(session, invoice_id=invoice_id)
     if invoice is None:

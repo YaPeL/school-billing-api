@@ -23,6 +23,10 @@ def list_payments_by_invoice_id(session: Session, invoice_id: UUID) -> list[Paym
     return payment_dal.list_payments_by_invoice_id(session, invoice_id=invoice_id)
 
 
+def list_payments_by_invoice_ids(session: Session, invoice_ids: list[UUID]) -> list[Payment]:
+    return payment_dal.list_payments_by_invoice_ids(session, invoice_ids)
+
+
 def get_payment_by_id(session: Session, payment_id: UUID) -> Payment:
     payment = payment_dal.get_payment_by_id(session, payment_id=payment_id)
     if payment is None:

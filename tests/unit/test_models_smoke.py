@@ -2,7 +2,10 @@ import pytest
 from sqlalchemy import inspect as sa_inspect
 
 from app.db.base import Base
-from app.models import Invoice, Payment, School, Student
+from app.models.invoice import Invoice
+from app.models.payment import Payment
+from app.models.school import School
+from app.models.student import Student
 
 
 @pytest.mark.smoke

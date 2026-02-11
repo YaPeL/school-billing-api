@@ -10,7 +10,10 @@ from app.dal.invoice import create_invoice, delete_invoice, get_invoice_by_id, l
 from app.dal.payment import create_payment, delete_payment, get_payment_by_id, list_payments, update_payment
 from app.dal.school import create_school, delete_school, get_school_by_id, list_schools, update_school
 from app.dal.student import create_student, delete_student, get_student_by_id, list_students, update_student
-from app.models import Invoice, Payment, School, Student
+from app.models.invoice import Invoice
+from app.models.payment import Payment
+from app.models.school import School
+from app.models.student import Student
 
 
 @pytest.mark.smoke

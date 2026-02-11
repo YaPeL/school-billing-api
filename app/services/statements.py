@@ -9,7 +9,8 @@ from app.dal import invoice as invoice_dal
 from app.dal import payment as payment_dal
 from app.dal import school as school_dal
 from app.dal import student as student_dal
-from app.models import Invoice, Payment
+from app.models.invoice import Invoice
+from app.models.payment import Payment
 from app.schemas.statement import InvoiceSummary, SchoolStatement, StatementTotals, StudentStatement
 from app.services.billing_rules import ZERO, balance_due, credit_amount, invoice_status, paid_total
 

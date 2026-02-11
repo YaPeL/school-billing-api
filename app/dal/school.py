@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.dal._types import SchoolCreate, SchoolUpdate
-from app.models import School
+from app.models.school import School
 
 
 def create_school(session: Session, data: SchoolCreate) -> School:

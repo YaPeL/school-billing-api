@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.dal._types import PaymentCreate, PaymentUpdate
-from app.models import Payment
+from app.models.payment import Payment
 
 
 def create_payment(session: Session, data: PaymentCreate) -> Payment:

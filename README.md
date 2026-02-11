@@ -23,6 +23,9 @@ TODO: add coverage badge once integration coverage reporting is added.
    - `poetry run db-seed`
 5. Run the API:
    - `poetry run uvicorn app.main:app --reload`
+   
+Extra generate migrations:
+   - `poetry run db-revision -m "message"`
 
 Open:
 - http://localhost:8000/docs
@@ -109,7 +112,16 @@ Read endpoints remain public (`GET` schools/students/invoices/payments, statemen
   - `poetry run pytest -m smoke --cov=app --cov-report=html`
 - Add CI coverage artifact + badge later.
 
+### Aggregations: push down to DB (perf)
+- Current statements compute totals in Python (`sum(...)` over invoices/payments).
+- Future: move aggregation to DAL using SQL (`SUM`, `GROUP BY`) to reduce memory/IO for large datasets:
+  - `paid_total_by_invoice(invoice_ids)` -> `{invoice_id: Decimal}`
+  - `statement_totals_for_student(student_id)` / `...for_school(school_id)` -> `StatementTotals`
+- Keep business rules (status derivation) in service, but fetch pre-aggregated numbers from DB when possible.
+
 ### Other small improvements
 - Centralize invoice status derivation behind a single domain/service function and reuse it consistently.
 - Map DB constraint errors (`IntegrityError`) to clean API errors (409/422) with readable messages.
 - Propagate request ids consistently and return `X-Request-Id` header.
+[![CI](https://github.com/YaPeL/school-billing-api/actions/workflows/ci.yml/badge.svg)]
+- (https://github.com/YaPeL/school-billing-api/actions/workflows/ci.yml)

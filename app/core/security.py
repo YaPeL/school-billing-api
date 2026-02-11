@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import secrets
 from datetime import UTC, datetime, timedelta
-from typing import Any, cast
+from typing import Any
 
 from jose import JWTError, jwt
 
@@ -19,7 +19,7 @@ def create_access_token(subject: str, role: str, ttl_minutes: int | None = None)
         "role": role,
         "exp": int(expires_at.timestamp()),
     }
-    return cast(str, jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm))
+    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
 
 
 def decode_access_token(token: str) -> UserClaims:

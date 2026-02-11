@@ -6,16 +6,13 @@ repos:
         args: ["--fix"]
       - id: ruff-format
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.19.1
+  - repo: local
     hooks:
       - id: mypy
-        additional_dependencies:
-          - pydantic
-          - pydantic-settings
-          - sqlalchemy
-          - python-jose[cryptography]
-          - prometheus-client
+        name: mypy
+        entry: poetry run mypy .
+        language: system
+        pass_filenames: false
 
   - repo: local
     hooks:

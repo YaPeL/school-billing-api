@@ -43,8 +43,13 @@
 
 ## 6. Tests
 - [x] Smoke unit tests mocking DAL (fast, no DB)
-- [ ] (Optional) Integration tests using PostgreSQL
+- [ ] (Optional) Integration tests using PostgreSQL (`@pytest.mark.integration`, real DB)
 
 ## 7. Extras (optional)
 - [x] Pagination on list endpoints
 - [x] (Optional) OpenTelemetry local tracing (Jaeger)
+
+## 8. Submission readiness
+- [x] GitHub Actions CI (push/PR to main, Python 3.12, ruff + mypy + smoke)
+- [x] README badges (CI + type-check + tests) and quickstart/auth polish
+- [ ] TODO: statement caching strategy (cache targets + invalidation plan)

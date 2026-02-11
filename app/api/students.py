@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 
 from app.api.constants import DEFAULT_LIMIT, DEFAULT_OFFSET, MAX_LIMIT
 from app.api.deps import require_admin
-from app.dal._types import StudentCreate as DalStudentCreate
-from app.dal._types import StudentUpdate as DalStudentUpdate
+from app.dal.update_types import StudentCreate as DalStudentCreate
+from app.dal.update_types import StudentUpdate as DalStudentUpdate
 from app.db.session import get_db
 from app.schemas import StudentCreate, StudentRead, StudentStatement, StudentUpdate
 from app.schemas.auth import UserClaims

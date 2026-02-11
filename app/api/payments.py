@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 
 from app.api.constants import DEFAULT_LIMIT, DEFAULT_OFFSET, MAX_LIMIT
 from app.api.deps import require_admin
-from app.dal._types import PaymentCreate as DalPaymentCreate
-from app.dal._types import PaymentUpdate as DalPaymentUpdate
+from app.dal.update_types import PaymentCreate as DalPaymentCreate
+from app.dal.update_types import PaymentUpdate as DalPaymentUpdate
 from app.db.session import get_db
 from app.schemas import PaymentCreate, PaymentRead, PaymentUpdate
 from app.schemas.auth import UserClaims

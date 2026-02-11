@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.constants import STUDENTS
 from app.api.exceptions import NotFoundError
 from app.dal import student as student_dal
-from app.dal._types import StudentCreate, StudentUpdate
+from app.dal.update_types import StudentCreate, StudentUpdate
 from app.models.student import Student
 
 

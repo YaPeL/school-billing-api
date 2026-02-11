@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 
 from app.api.constants import DEFAULT_LIMIT, DEFAULT_OFFSET, MAX_LIMIT
 from app.api.deps import require_admin
-from app.dal._types import SchoolCreate as DalSchoolCreate
-from app.dal._types import SchoolUpdate as DalSchoolUpdate
+from app.dal.update_types import SchoolCreate as DalSchoolCreate
+from app.dal.update_types import SchoolUpdate as DalSchoolUpdate
 from app.db.session import get_db
 from app.schemas import SchoolCreate, SchoolRead, SchoolStatement, SchoolUpdate
 from app.schemas.auth import UserClaims

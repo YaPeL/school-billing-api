@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 
 from app.api.constants import DEFAULT_LIMIT, DEFAULT_OFFSET, MAX_LIMIT
 from app.api.deps import require_admin
-from app.dal._types import InvoiceCreate as DalInvoiceCreate
-from app.dal._types import InvoiceUpdate as DalInvoiceUpdate
+from app.dal.update_types import InvoiceCreate as DalInvoiceCreate
+from app.dal.update_types import InvoiceUpdate as DalInvoiceUpdate
 from app.db.session import get_db
 from app.schemas import InvoiceCreate, InvoiceRead, InvoiceUpdate, PaymentRead
 from app.schemas.auth import UserClaims

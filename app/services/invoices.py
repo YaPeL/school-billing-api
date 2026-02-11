@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.constants import INVOICES
 from app.api.exceptions import NotFoundError
 from app.dal import invoice as invoice_dal
-from app.dal._types import InvoiceCreate, InvoiceUpdate
+from app.dal.update_types import InvoiceCreate, InvoiceUpdate
 from app.models.invoice import Invoice
 
 

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.constants import PAYMENTS
 from app.api.exceptions import NotFoundError
 from app.dal import payment as payment_dal
-from app.dal._types import PaymentCreate, PaymentUpdate
+from app.dal.update_types import PaymentCreate, PaymentUpdate
 from app.models.payment import Payment
 
 

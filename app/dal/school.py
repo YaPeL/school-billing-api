@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.dal._types import SchoolCreate, SchoolUpdate
+from app.dal.update_types import SchoolCreate, SchoolUpdate
 from app.models.school import School
 
 

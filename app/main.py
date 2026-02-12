@@ -4,6 +4,7 @@ import logging
 from typing import Any, cast
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.auth import router as auth_router
 from app.api.exception_handlers import not_found_error_handler
@@ -23,6 +24,16 @@ log = logging.getLogger("app")
 
 app = FastAPI(title="Mattilda Backend")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5000",
+        "http://127.0.0.1:5000",
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["Authorization", "content-type", "Accept"],
+)
 app.middleware("http")(request_logging_middleware)
 
 app.include_router(health_router, tags=["health"])

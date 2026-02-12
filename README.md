@@ -23,6 +23,9 @@ TODO: add coverage badge once integration coverage reporting is added.
    - `poetry run db-seed`
 5. Run the API:
    - `poetry run uvicorn app.main:app --reload`
+   
+Extra generate migrations:
+   - `poetry run db-revision -m "message"`
 
 Open:
 - http://localhost:8000/docs
@@ -63,12 +66,29 @@ Read endpoints remain public (`GET` schools/students/invoices/payments, statemen
 
 ## TODO / Future improvements
 
+### Async DB + fully async API
+- Switch to an **async SQLAlchemy stack** so endpoints can be truly async end-to-end:
+  - Use an async driver (eg `asyncpg`) + `create_async_engine`
+  - Replace `Session` with `AsyncSession` + async dependency (`async with` session)
+  - Update DAL to `async def` and use `await session.execute(...)`
+  - Ensure middleware + auth deps remain compatible with async execution
+- Goal: remove sync DB calls from async routes and make the whole request path non-blocking.
+
 ### Layer contracts (Service <-> DAL)
 - Replace `TypedDict` update payloads with a **Patch dataclass + `UNSET` sentinel** to make partial updates explicit:
   - `UNSET` = field not provided (do not touch)
   - `None` = explicitly set to NULL (if allowed)
   - value = set value
 - Prefer returning **DTO dataclasses** from DAL (instead of ORM objects) to avoid accidental lazy-loads and to improve testability.
+
+### Error handling: integrity / constraint mapping
+- Map DB constraint errors (`IntegrityError`) to clean API errors (409/422) with readable messages.
+- Example:
+  - Deleting an invoice with payments attached currently yields a 500.
+  - Preferred behavior:
+    - Option A: 409 Conflict with message like "Cannot delete invoice with payments"
+    - Option B: enforce cascade rules explicitly (only if product wants it)
+- Add a small error-mapper layer (DB exception -> domain/API error) and reuse it across routes.
 
 ### Caching (Redis)
 - Add optional Redis caching for **statements** (student/school):
@@ -87,10 +107,10 @@ Read endpoints remain public (`GET` schools/students/invoices/payments, statemen
   - CI: smoke only (for this challenge)
 
 ### Observability extras
-- Add Sentry (optional) via `SENTRY_DSN`:
+- Add Sentry via `SENTRY_DSN`:
   - capture unhandled exceptions
   - optional performance tracing
-- Add OpenTelemetry (optional) behind env flags (export to a local collector, no paid backend required).
+- Add OpenTelemetry behind env flags (export to a local collector, no paid backend required).
 
 ### Test runtime / parallelism
 - Add `pytest-xdist`:
@@ -109,7 +129,20 @@ Read endpoints remain public (`GET` schools/students/invoices/payments, statemen
   - `poetry run pytest -m smoke --cov=app --cov-report=html`
 - Add CI coverage artifact + badge later.
 
+### Aggregations: push down to DB (perf)
+- Current statements compute totals in Python (`sum(...)` over invoices/payments).
+- Future: move aggregation to DAL using SQL (`SUM`, `GROUP BY`) to reduce memory/IO for large datasets:
+  - `paid_total_by_invoice(invoice_ids)` -> `{invoice_id: Decimal}`
+  - `statement_totals_for_student(student_id)` / `...for_school(school_id)` -> `StatementTotals`
+- Keep business rules (status derivation) in service, but fetch pre-aggregated numbers from DB when possible.
+
+### CI: AI review bot on PRs
+- Add an optional PR check that runs an LLM review (Claude/Codex) and posts a comment:
+  - Trigger: `pull_request` (maybe only for repo members or via manual `/ai-review` comment)
+  - Inputs: git diff vs base branch + repo conventions + review rubric
+  - Output: top issues + quick wins, no auto-merge
+- Keep it non-blocking at first (informational), then decide if any checks should become required.
+
 ### Other small improvements
 - Centralize invoice status derivation behind a single domain/service function and reuse it consistently.
-- Map DB constraint errors (`IntegrityError`) to clean API errors (409/422) with readable messages.
 - Propagate request ids consistently and return `X-Request-Id` header.

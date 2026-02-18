@@ -13,6 +13,6 @@ async def test_health_ok() -> None:
 @pytest.mark.smoke
 def test_fastapi_skeleton_wired() -> None:
     paths = {route.path for route in app.routes}
-    assert app.title == "Mattilda Backend"
+    assert app.title == "school-billing"
     assert "/health" in paths
     assert "/auth/login" in paths

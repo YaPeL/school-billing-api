@@ -1,40 +1,38 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from uuid import UUID
 
-from sqlalchemy.orm import Session
-
 from app.api.constants import SCHOOLS
-from app.api.exceptions import NotFoundError
-from app.dal import school as school_dal
-from app.dal.update_types import SchoolCreate, SchoolUpdate
-from app.models.school import School
+from app.domain.dtos import SchoolDTO
+from app.domain.errors import NotFoundError
+from app.services.ports import SchoolRepo
 
 
-def create_school(session: Session, data: SchoolCreate) -> School:
-    return school_dal.create_school(session, data=data)
+def create_school(repo: SchoolRepo, data: Mapping[str, object]) -> SchoolDTO:
+    return repo.create(data)
 
 
-def list_schools(session: Session, *, offset: int, limit: int) -> list[School]:
-    return school_dal.list_schools(session, offset=offset, limit=limit)
+def list_schools(repo: SchoolRepo, *, offset: int, limit: int) -> list[SchoolDTO]:
+    return repo.list_all(offset=offset, limit=limit)
 
 
-def get_school_by_id(session: Session, school_id: UUID) -> School:
-    school = school_dal.get_school_by_id(session, school_id=school_id)
+def get_school_by_id(repo: SchoolRepo, school_id: UUID) -> SchoolDTO:
+    school = repo.get_by_id(school_id)
     if school is None:
         raise NotFoundError(SCHOOLS, str(school_id))
     return school
 
 
-def update_school(session: Session, school_id: UUID, data: SchoolUpdate) -> School:
-    school = school_dal.update_school(session, school_id=school_id, data=data)
+def update_school(repo: SchoolRepo, school_id: UUID, data: Mapping[str, object]) -> SchoolDTO:
+    school = repo.update(school_id, data)
     if school is None:
         raise NotFoundError(SCHOOLS, str(school_id))
     return school
 
 
-def delete_school(session: Session, school_id: UUID) -> bool:
-    deleted = school_dal.delete_school(session, school_id=school_id)
+def delete_school(repo: SchoolRepo, school_id: UUID) -> bool:
+    deleted = repo.delete(school_id)
     if not deleted:
         raise NotFoundError(SCHOOLS, str(school_id))
     return deleted

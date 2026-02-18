@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "mattilda-backend"
+name = "school-billing-api"
 version = "0.1.0"
 description = "Backend challenge: Schools, Students, Invoices, Payments"
 authors = ["Federico Apelhanz"]

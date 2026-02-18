@@ -16,3 +16,8 @@
 - Pagination defaults are centralized (offset/limit/max) in `app/api/constants.py`.
 - DAL update inputs use TypedDict payloads (app/dal/update_types.py) derived from model_dump(exclude_unset=True).
 - CI quality gates run in GitHub Actions on push/PR to `main` with Python 3.12 only (`ruff`, `mypy`, `pytest -m smoke`).
+- Integration tests are opt-in (`pytest -m integration`) and use a dedicated `TEST_DATABASE_URL` (never `DATABASE_URL` by default); they skip unless the URL is reachable, local-hosted, and explicitly test-named to prevent destructive TRUNCATE on non-test databases.
+- Domain-level errors (`DomainError`, `NotFoundError`, `ConflictError`) are the cross-layer error contract; FastAPI maps them to HTTP in one global handler module.
+- Services depend on repo ports (`Protocol`) and DTOs, while SQLAlchemy implementations live in DAL adapters (`app/dal/repos/*`).
+- Statement generation and invoice-payments listing are explicit use-cases wired through FastAPI dependencies for testability without DB access.
+- DB-backed FastAPI path handlers must be synchronous (`def`) when using sync SQLAlchemy repositories/services; keep `async def` only for non-blocking endpoints (e.g., in-memory health/metrics).

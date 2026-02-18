@@ -1,4 +1,4 @@
-# Mattilda Backend Challenge
+# school-billing API
 
 [![CI](https://github.com/YaPeL/school-billing-api/actions/workflows/ci.yml/badge.svg)](https://github.com/YaPeL/school-billing-api/actions/workflows/ci.yml)
 ![Type Check](https://img.shields.io/badge/type%20check-mypy-blue)
@@ -57,6 +57,16 @@ Read endpoints remain public (`GET` schools/students/invoices/payments, statemen
 ## Tests
 - Fast tests (no DB):
   - `poetry run pytest -m smoke`
+- Integration tests (opt-in, real DB, safe-only):
+  - Start Postgres: `docker compose up -d db`
+  - Create isolated test DB:
+    - `docker compose exec -T db psql -U school_billing -d postgres -c "CREATE DATABASE school_billing_test;"`
+  - Export test DB URL:
+    - `export TEST_DATABASE_URL=postgresql+psycopg://school_billing:school_billing@localhost:5432/school_billing_test`
+  - Run:
+    - `poetry run pytest -m integration`
+
+Integration tests are skipped unless `TEST_DATABASE_URL` is set, points to a local host, and uses a test-named database.
 
 ## Notes
 - Observability: structured logs + `/health` + `/health/db` + `/metrics`

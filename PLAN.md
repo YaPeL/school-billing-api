@@ -43,7 +43,8 @@
 
 ## 6. Tests
 - [x] Smoke unit tests mocking DAL (fast, no DB)
-- [ ] (Optional) Integration tests using PostgreSQL (`@pytest.mark.integration`, real DB)
+- [x] (Optional) Integration tests using PostgreSQL (`@pytest.mark.integration`, real DB)
+- [x] Integration DB safety gate (`TEST_DATABASE_URL` + safe local test DB validation before TRUNCATE)
 
 ## 7. Extras (optional)
 - [x] Pagination on list endpoints
@@ -52,4 +53,6 @@
 ## 8. Submission readiness
 - [x] GitHub Actions CI (push/PR to main, Python 3.12, ruff + mypy + smoke)
 - [x] README badges (CI + type-check + tests) and quickstart/auth polish
+- [x] Ports + adapters sweet-spot refactor (domain DTO/errors, repo protocols, SQLAlchemy adapters, thin routers with use-case deps)
+- [x] Convert DB-backed FastAPI handlers to sync `def` to avoid blocking the event loop with sync SQLAlchemy calls
 - [ ] TODO: statement caching strategy (cache targets + invalidation plan)

@@ -13,7 +13,8 @@
   - docker compose up --build
 - Tests:
   - poetry run pytest -m smoke
-  - poetry run pytest -m "smoke or integration" (optional)
+  - export TEST_DATABASE_URL=postgresql+psycopg://school_billing:school_billing@localhost:5432/school_billing_test
+  - poetry run pytest -m integration (optional, real DB)
 - CI:
   - GitHub Actions workflow on push/PR to `main` (Python 3.12, ruff, mypy, smoke)
 
@@ -35,7 +36,7 @@
 - Read schemas include UUID ids, related entity ids, and timestamp fields (including `created_at`/`updated_at` placeholders to keep response shapes consistent)
 - Schema validation enforces positive amounts for invoice totals and payment amounts (Decimal-based)
 - DAL CRUD modules for school/student/invoice/payment with Session-injected functions
-- DAL create/update functions refactored to single TypedDict payloads (`app/dal/_types.py`)
+- DAL create/update functions refactored to single TypedDict payloads (`app/dal/update_types.py`)
 - DAL query helpers for statements: invoices-by-student(s), students-by-school, payments-by-invoice(s)
 - Service layer business rules for payment-derived invoice math (`paid_total`, `balance_due`, `credit_amount`, `invoice_status`)
 - Student and school statement services with Decimal totals and invoice-level derived fields
@@ -53,7 +54,16 @@
 - GitHub Actions CI workflow added at `.github/workflows/ci.yml` (Python 3.12 only, Poetry install, ruff, mypy, smoke tests)
 - README polished with CI/type-check/tests badges, clearer quickstart, and bearer-auth examples for protected endpoints
 - Smoke test added to verify CI workflow quality gates exist (`tests/unit/test_ci_smoke.py`)
+- Integration test suite scaffolded under `tests/integration/` with real-PostgreSQL setup/skip logic and a statement flow test covering PENDING/PARTIAL/PAID/CREDIT status derivation from persisted payments
+- Integration DB safety hardened: tests now require `TEST_DATABASE_URL` and skip unless URL points to a local, explicitly test-named database before any destructive TRUNCATE
+- Branding cleanup completed: defaults/config/docs now use neutral `school-billing` / `school_billing` naming
+- Architecture refactor completed to a lightweight ports+adapters shape:
+  - Domain DTOs + domain errors under `app/domain/`
+  - Repo protocols in `app/services/ports.py`
+  - SQLAlchemy repo adapters in `app/dal/repos/`
+  - Statement and invoice-payment listing moved to explicit use-cases with dependency wiring in `app/api/deps.py`
+  - Global domain exception registration centralized in `app/api/exception_handlers.py`
+- DB-backed route handlers in `app/api/schools.py`, `app/api/students.py`, `app/api/invoices.py`, and `app/api/payments.py` are synchronous (`def`), ensuring sync SQLAlchemy work runs in FastAPI's threadpool instead of the event loop
 
 ## Pending
-- Integration tests against a real PostgreSQL database, marked with `@pytest.mark.integration`
 - Statement caching design: define what to cache and invalidation strategy when invoices/payments change

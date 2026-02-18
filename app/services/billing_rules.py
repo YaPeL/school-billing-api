@@ -10,7 +10,8 @@ ZERO = Decimal("0.00")
 
 
 class SupportsAmount(Protocol):
-    amount: Decimal
+    @property
+    def amount(self) -> Decimal: ...
 
 
 def paid_total(payments: Iterable[SupportsAmount]) -> Decimal:

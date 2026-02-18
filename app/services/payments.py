@@ -1,48 +1,46 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from uuid import UUID
 
-from sqlalchemy.orm import Session
-
 from app.api.constants import PAYMENTS
-from app.api.exceptions import NotFoundError
-from app.dal import payment as payment_dal
-from app.dal.update_types import PaymentCreate, PaymentUpdate
-from app.models.payment import Payment
+from app.domain.dtos import PaymentDTO
+from app.domain.errors import NotFoundError
+from app.services.ports import PaymentRepo
 
 
-def create_payment(session: Session, data: PaymentCreate) -> Payment:
-    return payment_dal.create_payment(session, data=data)
+def create_payment(repo: PaymentRepo, data: Mapping[str, object]) -> PaymentDTO:
+    return repo.create(data)
 
 
-def list_payments(session: Session, *, offset: int, limit: int) -> list[Payment]:
-    return payment_dal.list_payments(session, offset=offset, limit=limit)
+def list_payments(repo: PaymentRepo, *, offset: int, limit: int) -> list[PaymentDTO]:
+    return repo.list_all(offset=offset, limit=limit)
 
 
-def list_payments_by_invoice_id(session: Session, invoice_id: UUID) -> list[Payment]:
-    return payment_dal.list_payments_by_invoice_id(session, invoice_id=invoice_id)
+def list_payments_by_invoice_id(repo: PaymentRepo, invoice_id: UUID) -> list[PaymentDTO]:
+    return repo.list_by_invoice_id(invoice_id)
 
 
-def list_payments_by_invoice_ids(session: Session, invoice_ids: list[UUID]) -> list[Payment]:
-    return payment_dal.list_payments_by_invoice_ids(session, invoice_ids)
+def list_payments_by_invoice_ids(repo: PaymentRepo, invoice_ids: Sequence[UUID]) -> list[PaymentDTO]:
+    return repo.list_by_invoice_ids(invoice_ids)
 
 
-def get_payment_by_id(session: Session, payment_id: UUID) -> Payment:
-    payment = payment_dal.get_payment_by_id(session, payment_id=payment_id)
+def get_payment_by_id(repo: PaymentRepo, payment_id: UUID) -> PaymentDTO:
+    payment = repo.get_by_id(payment_id)
     if payment is None:
         raise NotFoundError(PAYMENTS, str(payment_id))
     return payment
 
 
-def update_payment(session: Session, payment_id: UUID, data: PaymentUpdate) -> Payment:
-    payment = payment_dal.update_payment(session, payment_id=payment_id, data=data)
+def update_payment(repo: PaymentRepo, payment_id: UUID, data: Mapping[str, object]) -> PaymentDTO:
+    payment = repo.update(payment_id, data)
     if payment is None:
         raise NotFoundError(PAYMENTS, str(payment_id))
     return payment
 
 
-def delete_payment(session: Session, payment_id: UUID) -> bool:
-    deleted = payment_dal.delete_payment(session, payment_id=payment_id)
+def delete_payment(repo: PaymentRepo, payment_id: UUID) -> bool:
+    deleted = repo.delete(payment_id)
     if not deleted:
         raise NotFoundError(PAYMENTS, str(payment_id))
     return deleted

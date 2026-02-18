@@ -3,27 +3,17 @@ from __future__ import annotations
 from collections import defaultdict
 from uuid import UUID
 
-from sqlalchemy.orm import Session
-
-from app.api.constants import SCHOOLS, STUDENTS
-from app.api.exceptions import NotFoundError
-from app.dal import invoice as invoice_dal
-from app.dal import payment as payment_dal
-from app.dal import school as school_dal
-from app.dal import student as student_dal
-from app.models.invoice import Invoice
-from app.models.payment import Payment
+from app.domain.dtos import InvoiceDTO, PaymentDTO, SchoolDTO, StudentDTO
 from app.schemas.statement import InvoiceSummary, SchoolStatement, StatementTotals, StudentStatement
 from app.services.billing_rules import ZERO, balance_due, credit_amount, invoice_status, paid_total
 
 
-def get_student_statement(session: Session, student_id: UUID) -> StudentStatement:
-    student = student_dal.get_student_by_id(session, student_id=student_id)
-    if student is None:
-        raise NotFoundError(STUDENTS, str(student_id))
-
-    invoices = invoice_dal.list_invoices_by_student_id(session, student_id=student.id)
-    payments_by_invoice = _payments_by_invoice(session, invoices)
+def build_student_statement(
+    student: StudentDTO,
+    invoices: list[InvoiceDTO],
+    payments: list[PaymentDTO],
+) -> StudentStatement:
+    payments_by_invoice = _group_payments_by_invoice(payments)
     invoice_summaries = [_build_invoice_summary(invoice, payments_by_invoice[invoice.id]) for invoice in invoices]
 
     return StudentStatement(
@@ -34,15 +24,13 @@ def get_student_statement(session: Session, student_id: UUID) -> StudentStatemen
     )
 
 
-def get_school_statement(session: Session, school_id: UUID) -> SchoolStatement:
-    school = school_dal.get_school_by_id(session, school_id=school_id)
-    if school is None:
-        raise NotFoundError(SCHOOLS, str(school_id))
-
-    students = student_dal.list_students_by_school_id(session, school_id=school.id)
-    student_ids = [student.id for student in students]
-    invoices = invoice_dal.list_invoices_by_student_ids(session, student_ids=student_ids)
-    payments_by_invoice = _payments_by_invoice(session, invoices)
+def build_school_statement(
+    school: SchoolDTO,
+    students: list[StudentDTO],
+    invoices: list[InvoiceDTO],
+    payments: list[PaymentDTO],
+) -> SchoolStatement:
+    payments_by_invoice = _group_payments_by_invoice(payments)
     invoice_summaries = [_build_invoice_summary(invoice, payments_by_invoice[invoice.id]) for invoice in invoices]
 
     return SchoolStatement(
@@ -53,17 +41,14 @@ def get_school_statement(session: Session, school_id: UUID) -> SchoolStatement:
     )
 
 
-def _payments_by_invoice(session: Session, invoices: list[Invoice]) -> dict[UUID, list[Payment]]:
-    invoice_ids = [invoice.id for invoice in invoices]
-    payments = payment_dal.list_payments_by_invoice_ids(session, invoice_ids=invoice_ids)
-
-    grouped: dict[UUID, list[Payment]] = defaultdict(list)
+def _group_payments_by_invoice(payments: list[PaymentDTO]) -> dict[UUID, list[PaymentDTO]]:
+    grouped: dict[UUID, list[PaymentDTO]] = defaultdict(list)
     for payment in payments:
         grouped[payment.invoice_id].append(payment)
     return grouped
 
 
-def _build_invoice_summary(invoice: Invoice, payments: list[Payment]) -> InvoiceSummary:
+def _build_invoice_summary(invoice: InvoiceDTO, payments: list[PaymentDTO]) -> InvoiceSummary:
     summary_paid_total = paid_total(payments)
     summary_balance_due = balance_due(invoice.total_amount, payments)
     summary_credit_amount = credit_amount(invoice.total_amount, payments)

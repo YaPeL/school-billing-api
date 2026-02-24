@@ -32,3 +32,7 @@ class InvoiceRead(ReadSchemaModel):
     issued_at: datetime
     due_date: date
     description: str | None = None
+    payments_total: Decimal = Decimal("0.00")
+    refunds_total: Decimal = Decimal("0.00")
+    paid_total: Decimal = Decimal("0.00")
+    balance_due: Decimal = Decimal("0.00")

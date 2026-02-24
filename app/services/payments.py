@@ -8,7 +8,7 @@ from uuid import UUID
 from app.api.constants import INVOICES, PAYMENTS
 from app.domain.dtos import InvoiceDTO, PaymentDTO
 from app.domain.enums import PaymentKind
-from app.domain.errors import NotFoundError
+from app.domain.errors import ConflictError, NotFoundError
 from app.services.billing_rules import (
     derive_invoice_status,
     movement_delta,
@@ -27,6 +27,7 @@ async def create_payment(
     payments = await payment_repo.list_by_invoice_id(invoice.id)
     candidate_kind = cast(PaymentKind, data.get("kind", PaymentKind.PAYMENT))
     candidate_amount = cast(Decimal, data["amount"])
+    _validate_movement_payload(kind=candidate_kind, amount=candidate_amount)
     next_net_paid = net_paid_total(payments) + movement_delta(candidate_kind, candidate_amount)
     validate_net_paid_bounds(invoice.total_amount, next_net_paid)
 
@@ -67,6 +68,7 @@ async def update_payment(
     target_invoice_id = cast(UUID, data.get("invoice_id", payment.invoice_id))
     updated_kind = cast(PaymentKind, data.get("kind", payment.kind))
     updated_amount = cast(Decimal, data.get("amount", payment.amount))
+    _validate_movement_payload(kind=updated_kind, amount=updated_amount)
     updated_delta = movement_delta(updated_kind, updated_amount)
     old_delta = movement_delta(payment.kind, payment.amount)
 
@@ -134,3 +136,10 @@ async def _get_invoice_or_raise(invoice_repo: InvoiceRepo, invoice_id: UUID) -> 
     if invoice is None:
         raise NotFoundError(INVOICES, str(invoice_id))
     return invoice
+
+
+def _validate_movement_payload(*, kind: PaymentKind | None, amount: Decimal | None) -> None:
+    if kind is None:
+        raise ConflictError("payment movement kind cannot be null")
+    if amount is None or amount <= Decimal("0"):
+        raise ConflictError("movement amount must be greater than zero")

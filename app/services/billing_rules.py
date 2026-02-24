@@ -19,12 +19,22 @@ class SupportsMovement(Protocol):
 
 
 def net_paid_total(movements: Iterable[SupportsMovement]) -> Decimal:
+    return payments_total(movements) - refunds_total(movements)
+
+
+def payments_total(movements: Iterable[SupportsMovement]) -> Decimal:
+    total = ZERO
+    for movement in movements:
+        if movement.kind == PaymentKind.PAYMENT:
+            total += movement.amount
+    return total
+
+
+def refunds_total(movements: Iterable[SupportsMovement]) -> Decimal:
     total = ZERO
     for movement in movements:
         if movement.kind == PaymentKind.REFUND:
-            total -= movement.amount
-            continue
-        total += movement.amount
+            total += movement.amount
     return total
 
 
@@ -48,6 +58,6 @@ def derive_invoice_status(invoice_total: Decimal, net_paid: Decimal) -> InvoiceS
 
 def validate_net_paid_bounds(invoice_total: Decimal, net_paid: Decimal) -> None:
     if net_paid < ZERO:
-        raise ConflictError("Refund exceeds collected amount for this invoice")
+        raise ConflictError("refund amount exceeds net paid amount")
     if net_paid > invoice_total:
-        raise ConflictError("Payment exceeds invoice total amount")
+        raise ConflictError("payment amount exceeds remaining balance")

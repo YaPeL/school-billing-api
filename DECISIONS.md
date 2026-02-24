@@ -3,6 +3,8 @@
 - Payments are first-class: invoices can have multiple payments (partial payments supported).
 - Invoice status is persisted on each invoice and constrained to `PENDING`/`PARTIAL`/`PAID`; overpayment is rejected (no `CREDIT` status).
 - Payments are typed money movements: `PAYMENT` increases net paid and `REFUND` decreases net paid.
+- Payment/refund movements are bounded by invoice net state: no movement may drive `net_paid` below `0` or above `invoice.total_amount`; violations return a domain conflict with explicit client-safe messages.
+- Invoice and statement reads expose both gross and net movement totals (`payments_total`, `refunds_total`, `paid_total`) plus due balance fields for auditability.
 - DAL is the only layer touching SQLAlchemy `AsyncSession`; services orchestrate DAL and apply business rules.
 - Primary keys for School/Student/Invoice/Payment use UUIDv7; all related foreign keys are UUID.
 - DAL create/update inputs use TypedDict payloads (not many function params).

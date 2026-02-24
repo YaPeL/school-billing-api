@@ -22,24 +22,34 @@ AdminUser = Annotated[UserClaims, Depends(require_admin)]
 
 
 @router.post("", response_model=InvoiceRead)
-async def create_invoice(invoice_in: InvoiceCreate, repo: InvoiceRepoDep, _admin: AdminUser) -> InvoiceRead:
-    invoice = await invoice_service.create_invoice(repo, data=invoice_in.model_dump())
-    return InvoiceRead.model_validate(invoice)
+async def create_invoice(invoice_in: InvoiceCreate, invoice_repo: InvoiceRepoDep, _admin: AdminUser) -> InvoiceRead:
+    invoice = await invoice_service.create_invoice(invoice_repo, data=invoice_in.model_dump())
+    return InvoiceRead.model_validate(invoice_service.serialize_invoice_with_totals(invoice, []))
 
 
 @router.get("", response_model=list[InvoiceRead])
 async def list_invoices(
-    repo: InvoiceRepoDep,
+    invoice_repo: InvoiceRepoDep,
+    payment_repo: PaymentRepoDep,
     offset: int = Query(default=DEFAULT_OFFSET, ge=0),
     limit: int = Query(default=DEFAULT_LIMIT, ge=1, le=MAX_LIMIT),
 ) -> list[InvoiceRead]:
-    invoices = await invoice_service.list_invoices(repo, offset=offset, limit=limit)
+    invoices = await invoice_service.list_invoices_with_totals(
+        invoice_repo,
+        payment_repo,
+        offset=offset,
+        limit=limit,
+    )
     return [InvoiceRead.model_validate(invoice) for invoice in invoices]
 
 
 @router.get("/{invoice_id}", response_model=InvoiceRead)
-async def get_invoice(invoice_id: UUID, repo: InvoiceRepoDep) -> InvoiceRead:
-    invoice = await invoice_service.get_invoice_by_id(repo, invoice_id=invoice_id)
+async def get_invoice(invoice_id: UUID, invoice_repo: InvoiceRepoDep, payment_repo: PaymentRepoDep) -> InvoiceRead:
+    invoice = await invoice_service.get_invoice_with_totals(
+        invoice_repo,
+        payment_repo,
+        invoice_id=invoice_id,
+    )
     return InvoiceRead.model_validate(invoice)
 
 
@@ -63,7 +73,8 @@ async def patch_invoice(
         invoice_id=invoice_id,
         data=invoice_in.model_dump(exclude_unset=True),
     )
-    return InvoiceRead.model_validate(invoice)
+    payments = await payment_repo.list_by_invoice_id(invoice.id)
+    return InvoiceRead.model_validate(invoice_service.serialize_invoice_with_totals(invoice, payments))
 
 
 @router.delete("/{invoice_id}", status_code=status.HTTP_204_NO_CONTENT)

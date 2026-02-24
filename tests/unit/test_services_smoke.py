@@ -174,6 +174,8 @@ def test_business_rule_helpers_support_net_paid_and_three_statuses() -> None:
         _payment(uuid7(), "10.00", invoice_id, PaymentKind.REFUND),
     ]
 
+    assert billing_rules.payments_total(movements) == Decimal("40.00")
+    assert billing_rules.refunds_total(movements) == Decimal("10.00")
     net_paid = billing_rules.net_paid_total(movements)
     assert net_paid == Decimal("30.00")
     assert billing_rules.balance_due(Decimal("100.00"), net_paid) == Decimal("70.00")
@@ -258,7 +260,7 @@ async def test_create_payment_rejects_overpayment() -> None:
     )
     payment_repo = FakePaymentRepo(by_invoice={})
 
-    with pytest.raises(ConflictError):
+    with pytest.raises(ConflictError, match="payment amount exceeds remaining balance"):
         await payment_service.create_payment(
             payment_repo,
             invoice_repo,
@@ -278,7 +280,7 @@ async def test_create_payment_rejects_over_refund() -> None:
         by_invoice={invoice_id: [_payment(uuid7(), "50.00", invoice_id, PaymentKind.PAYMENT)]}
     )
 
-    with pytest.raises(ConflictError):
+    with pytest.raises(ConflictError, match="refund amount exceeds net paid amount"):
         await payment_service.create_payment(
             payment_repo,
             invoice_repo,
@@ -319,8 +321,12 @@ async def test_get_student_statement_use_case_aggregates_net_paid_totals() -> No
     assert statement.student_id == student_id
     assert statement.school_id == school_id
     assert statement.totals.invoiced_total == Decimal("150.00")
+    assert statement.totals.payments_total == Decimal("140.00")
+    assert statement.totals.refunds_total == Decimal("10.00")
     assert statement.totals.paid_total == Decimal("130.00")
     assert statement.totals.balance_due_total == Decimal("20.00")
+    assert statement.invoices[1].payments_total == Decimal("40.00")
+    assert statement.invoices[1].refunds_total == Decimal("10.00")
     assert [inv.status for inv in statement.invoices] == [InvoiceStatus.PAID, InvoiceStatus.PARTIAL]
 
 
@@ -363,6 +369,8 @@ async def test_get_school_statement_use_case_aggregates_across_students() -> Non
     assert statement.school_id == school_id
     assert statement.students_count == 2
     assert statement.totals.invoiced_total == Decimal("200.00")
+    assert statement.totals.payments_total == Decimal("140.00")
+    assert statement.totals.refunds_total == Decimal("0.00")
     assert statement.totals.paid_total == Decimal("140.00")
     assert statement.totals.balance_due_total == Decimal("60.00")
     assert [inv.status for inv in statement.invoices] == [InvoiceStatus.PARTIAL, InvoiceStatus.PAID]

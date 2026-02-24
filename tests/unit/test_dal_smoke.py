@@ -10,6 +10,7 @@ from app.dal.invoice import create_invoice, delete_invoice, get_invoice_by_id, l
 from app.dal.payment import create_payment, delete_payment, get_payment_by_id, list_payments, update_payment
 from app.dal.school import create_school, delete_school, get_school_by_id, list_schools, update_school
 from app.dal.student import create_student, delete_student, get_student_by_id, list_students, update_student
+from app.domain.enums import InvoiceStatus, PaymentKind
 from app.models.invoice import Invoice
 from app.models.payment import Payment
 from app.models.school import School
@@ -113,6 +114,7 @@ async def test_invoice_crud_uses_session_methods() -> None:
     assert isinstance(created, Invoice)
     assert created.student_id == student_id
     assert created.total_amount == Decimal("100.00")
+    assert created.status == InvoiceStatus.PENDING
     assert created.due_date == date(2026, 2, 28)
     assert created.description == "Tuition"
 
@@ -155,6 +157,7 @@ async def test_payment_crud_uses_session_methods() -> None:
     assert isinstance(created, Payment)
     assert created.invoice_id == invoice_id
     assert created.amount == Decimal("25.50")
+    assert created.kind == PaymentKind.PAYMENT
     assert created.method == "bank_transfer"
     assert created.reference == "ABC123"
 

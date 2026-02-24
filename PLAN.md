@@ -56,3 +56,6 @@
 - [x] Ports + adapters sweet-spot refactor (domain DTO/errors, repo protocols, SQLAlchemy adapters, thin routers with use-case deps)
 - [x] Migrate DB-backed runtime paths to async SQLAlchemy 2.0 (`AsyncSession` + `postgresql+asyncpg`) and async FastAPI handlers
 - [ ] TODO: statement caching strategy (cache targets + invalidation plan)
+
+## 9. Billing movements hardening
+- [x] Persist invoice status (`PENDING`/`PARTIAL`/`PAID`) + add typed payment movement kind (`PAYMENT`/`REFUND`) across model/schema/service/API with overpay/over-refund validation

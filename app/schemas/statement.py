@@ -10,7 +10,6 @@ class StatementTotals(SchemaModel):
     invoiced_total: Decimal
     paid_total: Decimal
     balance_due_total: Decimal
-    credit_total: Decimal
 
 
 class InvoiceSummary(SchemaModel):
@@ -21,7 +20,6 @@ class InvoiceSummary(SchemaModel):
     description: str | None = None
     paid_total: Decimal
     balance_due: Decimal
-    credit_amount: Decimal
     status: InvoiceStatus
 
 

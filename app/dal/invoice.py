@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dal.update_types import InvoiceCreate, InvoiceUpdate
+from app.domain.enums import InvoiceStatus
 from app.models.invoice import Invoice
 
 
@@ -13,6 +14,7 @@ async def create_invoice(session: AsyncSession, data: InvoiceCreate) -> Invoice:
         student_id=data["student_id"],
         total_amount=data["total_amount"],
         due_date=data["due_date"],
+        status=data.get("status", InvoiceStatus.PENDING),
         description=data.get("description"),
     )
     issued_at = data.get("issued_at")
@@ -62,6 +64,8 @@ async def update_invoice(
         invoice.student_id = data["student_id"]
     if "total_amount" in data:
         invoice.total_amount = data["total_amount"]
+    if "status" in data:
+        invoice.status = data["status"]
     if "due_date" in data:
         invoice.due_date = data["due_date"]
     if "description" in data:

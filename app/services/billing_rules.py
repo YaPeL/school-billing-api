@@ -4,35 +4,50 @@ from collections.abc import Iterable
 from decimal import Decimal
 from typing import Protocol
 
-from app.domain.enums import InvoiceStatus
+from app.domain.enums import InvoiceStatus, PaymentKind
+from app.domain.errors import ConflictError
 
 ZERO = Decimal("0.00")
 
 
-class SupportsAmount(Protocol):
+class SupportsMovement(Protocol):
     @property
     def amount(self) -> Decimal: ...
 
-
-def paid_total(payments: Iterable[SupportsAmount]) -> Decimal:
-    return sum((payment.amount for payment in payments), start=ZERO)
-
-
-def balance_due(invoice_total: Decimal, payments: Iterable[SupportsAmount]) -> Decimal:
-    return invoice_total - paid_total(payments)
+    @property
+    def kind(self) -> PaymentKind: ...
 
 
-def credit_amount(invoice_total: Decimal, payments: Iterable[SupportsAmount]) -> Decimal:
-    credit = paid_total(payments) - invoice_total
-    return max(credit, ZERO)
+def net_paid_total(movements: Iterable[SupportsMovement]) -> Decimal:
+    total = ZERO
+    for movement in movements:
+        if movement.kind == PaymentKind.REFUND:
+            total -= movement.amount
+            continue
+        total += movement.amount
+    return total
 
 
-def invoice_status(invoice_total: Decimal, payments: Iterable[SupportsAmount]) -> InvoiceStatus:
-    paid = paid_total(payments)
-    if paid == ZERO:
+def movement_delta(kind: PaymentKind, amount: Decimal) -> Decimal:
+    if kind == PaymentKind.REFUND:
+        return -amount
+    return amount
+
+
+def balance_due(invoice_total: Decimal, net_paid: Decimal) -> Decimal:
+    return invoice_total - net_paid
+
+
+def derive_invoice_status(invoice_total: Decimal, net_paid: Decimal) -> InvoiceStatus:
+    if net_paid == ZERO:
         return InvoiceStatus.PENDING
-    if paid < invoice_total:
+    if net_paid < invoice_total:
         return InvoiceStatus.PARTIAL
-    if paid == invoice_total:
-        return InvoiceStatus.PAID
-    return InvoiceStatus.CREDIT
+    return InvoiceStatus.PAID
+
+
+def validate_net_paid_bounds(invoice_total: Decimal, net_paid: Decimal) -> None:
+    if net_paid < ZERO:
+        raise ConflictError("Refund exceeds collected amount for this invoice")
+    if net_paid > invoice_total:
+        raise ConflictError("Payment exceeds invoice total amount")

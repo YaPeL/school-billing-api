@@ -2,6 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
+from app.domain.enums import InvoiceStatus
 from app.schemas.base import ReadSchemaModel, SchemaModel
 from app.schemas.types import PositiveAmount
 
@@ -25,6 +26,7 @@ class InvoiceRead(ReadSchemaModel):
     id: UUID
     student_id: UUID
     total_amount: Decimal
+    status: InvoiceStatus
     created_at: datetime | None = None
     updated_at: datetime | None = None
     issued_at: datetime

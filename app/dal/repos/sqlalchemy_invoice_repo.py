@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.dal import invoice as invoice_dal
 from app.dal.update_types import InvoiceCreate, InvoiceUpdate
 from app.domain.dtos import InvoiceDTO
+from app.domain.enums import InvoiceStatus
 from app.models.invoice import Invoice
 
 
@@ -28,6 +29,8 @@ class SQLAlchemyInvoiceRepo:
             payload["description"] = cast(str | None, data["description"])
         if "issued_at" in data:
             payload["issued_at"] = cast(datetime | None, data["issued_at"])
+        if "status" in data:
+            payload["status"] = cast(InvoiceStatus, data["status"])
 
         invoice = await invoice_dal.create_invoice(self._session, data=payload)
         return _to_invoice_dto(invoice)
@@ -56,6 +59,8 @@ class SQLAlchemyInvoiceRepo:
             payload["total_amount"] = cast(Decimal, data["total_amount"])
         if "due_date" in data:
             payload["due_date"] = cast(date, data["due_date"])
+        if "status" in data:
+            payload["status"] = cast(InvoiceStatus, data["status"])
         if "description" in data:
             payload["description"] = cast(str | None, data["description"])
         if "issued_at" in data:
@@ -75,6 +80,7 @@ def _to_invoice_dto(invoice: Invoice) -> InvoiceDTO:
         total_amount=invoice.total_amount,
         due_date=invoice.due_date,
         issued_at=invoice.issued_at,
+        status=invoice.status,
         description=invoice.description,
         created_at=cast(datetime | None, getattr(invoice, "created_at", None)),
         updated_at=cast(datetime | None, getattr(invoice, "updated_at", None)),

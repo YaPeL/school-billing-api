@@ -5,6 +5,8 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import NotRequired, TypedDict
 
+from app.domain.enums import InvoiceStatus, PaymentKind
+
 
 class SchoolCreate(TypedDict):
     name: str
@@ -28,6 +30,7 @@ class InvoiceCreate(TypedDict):
     student_id: uuid.UUID
     total_amount: Decimal
     due_date: date
+    status: NotRequired[InvoiceStatus]
     description: NotRequired[str | None]
     issued_at: NotRequired[datetime | None]
 
@@ -35,6 +38,7 @@ class InvoiceCreate(TypedDict):
 class InvoiceUpdate(TypedDict, total=False):
     student_id: uuid.UUID
     total_amount: Decimal
+    status: InvoiceStatus
     due_date: date
     description: str | None
     issued_at: datetime | None
@@ -43,6 +47,7 @@ class InvoiceUpdate(TypedDict, total=False):
 class PaymentCreate(TypedDict):
     invoice_id: uuid.UUID
     amount: Decimal
+    kind: NotRequired[PaymentKind]
     method: NotRequired[str | None]
     reference: NotRequired[str | None]
     paid_at: NotRequired[datetime | None]
@@ -51,6 +56,7 @@ class PaymentCreate(TypedDict):
 class PaymentUpdate(TypedDict, total=False):
     invoice_id: uuid.UUID
     amount: Decimal
+    kind: PaymentKind
     method: str | None
     reference: str | None
     paid_at: datetime | None

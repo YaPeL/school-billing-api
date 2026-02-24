@@ -5,12 +5,13 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Numeric, String
+from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Numeric, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_extensions import uuid7
 
 from app.db.base import Base
+from app.domain.enums import PaymentKind
 
 if TYPE_CHECKING:
     from app.models.invoice import Invoice
@@ -28,6 +29,12 @@ class Payment(Base):
         index=True,
     )
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    kind: Mapped[PaymentKind] = mapped_column(
+        Enum(PaymentKind, name="payment_kind"),
+        nullable=False,
+        default=PaymentKind.PAYMENT,
+        server_default=PaymentKind.PAYMENT.value,
+    )
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     method: Mapped[str | None] = mapped_column(String(100), nullable=True)
     reference: Mapped[str | None] = mapped_column(String(255), nullable=True)

@@ -7,6 +7,7 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.enums import InvoiceStatus, PaymentKind
 from app.models.invoice import Invoice
 from app.models.payment import Payment
 from app.models.school import School
@@ -73,11 +74,13 @@ async def _get_or_create_payment(
     method: str,
     reference: str,
     paid_at: datetime,
+    kind: PaymentKind = PaymentKind.PAYMENT,
 ) -> Payment:
     payment = await session.scalar(
         select(Payment).where(
             Payment.invoice_id == invoice_id,
             Payment.amount == amount,
+            Payment.kind == kind,
             Payment.method == method,
             Payment.reference == reference,
         )
@@ -88,6 +91,7 @@ async def _get_or_create_payment(
     payment = Payment(
         invoice_id=invoice_id,
         amount=amount,
+        kind=kind,
         method=method,
         reference=reference,
         paid_at=paid_at,
@@ -142,3 +146,15 @@ async def seed_db(session: AsyncSession) -> None:
         reference="DEMO-PARTIAL-1",
         paid_at=datetime(2026, 1, 15, 13, 0, tzinfo=UTC),
     )
+    await _get_or_create_payment(
+        session=session,
+        invoice_id=partial_invoice.id,
+        amount=Decimal("50.00"),
+        method="cash",
+        reference="DEMO-REFUND-1",
+        paid_at=datetime(2026, 1, 25, 13, 0, tzinfo=UTC),
+        kind=PaymentKind.REFUND,
+    )
+
+    paid_invoice.status = InvoiceStatus.PAID
+    partial_invoice.status = InvoiceStatus.PARTIAL

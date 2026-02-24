@@ -38,7 +38,7 @@
 - DAL CRUD modules for school/student/invoice/payment with Session-injected functions
 - DAL create/update functions refactored to single TypedDict payloads (`app/dal/update_types.py`)
 - DAL query helpers for statements: invoices-by-student(s), students-by-school, payments-by-invoice(s)
-- Service layer business rules for payment-derived invoice math (`paid_total`, `balance_due`, `credit_amount`, `invoice_status`)
+- Service layer business rules for payment/refund net math (`net_paid_total`, `balance_due`, persisted `invoice.status`)
 - Student and school statement services with Decimal totals and invoice-level derived fields
 - Statement schemas under `app/schemas/statement.py` (`InvoiceSummary`, `StudentStatement`, `SchoolStatement`)
 - Smoke tests verify metadata registration, FK indexing, relationships, DAL session usage, and schema validation without DB
@@ -54,7 +54,7 @@
 - GitHub Actions CI workflow added at `.github/workflows/ci.yml` (Python 3.12 only, Poetry install, ruff, mypy, smoke tests)
 - README polished with CI/type-check/tests badges, clearer quickstart, and bearer-auth examples for protected endpoints
 - Smoke test added to verify CI workflow quality gates exist (`tests/unit/test_ci_smoke.py`)
-- Integration test suite scaffolded under `tests/integration/` with real-PostgreSQL setup/skip logic and a statement flow test covering PENDING/PARTIAL/PAID/CREDIT status derivation from persisted payments
+- Integration test suite scaffolded under `tests/integration/` with real-PostgreSQL setup/skip logic and a statement flow test covering PENDING/PARTIAL/PAID with refund movements
 - Integration DB safety hardened: tests now require `TEST_DATABASE_URL` and skip unless URL points to a local, explicitly test-named database before any destructive TRUNCATE
 - Branding cleanup completed: defaults/config/docs now use neutral `school-billing` / `school_billing` naming
 - Architecture refactor completed to a lightweight ports+adapters shape:
@@ -71,6 +71,11 @@
   - `/health/db`, DB seed script, and integration fixtures use async session patterns
   - Alembic env converts async runtime URL (`postgresql+asyncpg`) to sync driver (`postgresql+psycopg`) for migrations
   - Smoke tests were updated to async mocks (`AsyncMock`) and continue running without DB access (`26 passed`)
+- Invoice/payment movement model upgraded:
+  - Invoice `status` persisted in DB (`PENDING`/`PARTIAL`/`PAID`) and included in API reads
+  - Payment `kind` persisted in DB (`PAYMENT`/`REFUND`) and accepted in `POST/PATCH /payments`
+  - Service-level validation rejects overpayment and over-refund with domain `ConflictError` (HTTP 409)
+  - Statement schemas/calculation now use net paid (`payments - refunds`) and removed credit fields
 
 ## Pending
 - Statement caching design: define what to cache and invalidation strategy when invoices/payments change

@@ -2,6 +2,7 @@ import pytest
 from sqlalchemy import inspect as sa_inspect
 
 from app.db.base import Base
+from app.domain.enums import InvoiceStatus, PaymentKind
 from app.models.invoice import Invoice
 from app.models.payment import Payment
 from app.models.school import School
@@ -26,3 +27,9 @@ def test_required_relationships_exist() -> None:
     assert "students" in sa_inspect(School).relationships
     assert "invoices" in sa_inspect(Student).relationships
     assert "payments" in sa_inspect(Invoice).relationships
+
+
+@pytest.mark.smoke
+def test_invoice_and_payment_default_enums_are_configured() -> None:
+    assert Invoice.__table__.c.status.default.arg == InvoiceStatus.PENDING
+    assert Payment.__table__.c.kind.default.arg == PaymentKind.PAYMENT

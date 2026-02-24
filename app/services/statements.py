@@ -5,7 +5,7 @@ from uuid import UUID
 
 from app.domain.dtos import InvoiceDTO, PaymentDTO, SchoolDTO, StudentDTO
 from app.schemas.statement import InvoiceSummary, SchoolStatement, StatementTotals, StudentStatement
-from app.services.billing_rules import ZERO, balance_due, credit_amount, invoice_status, paid_total
+from app.services.billing_rules import ZERO, balance_due, paid_total
 
 
 def build_student_statement(
@@ -51,7 +51,6 @@ def _group_payments_by_invoice(payments: list[PaymentDTO]) -> dict[UUID, list[Pa
 def _build_invoice_summary(invoice: InvoiceDTO, payments: list[PaymentDTO]) -> InvoiceSummary:
     summary_paid_total = paid_total(payments)
     summary_balance_due = balance_due(invoice.total_amount, payments)
-    summary_credit_amount = credit_amount(invoice.total_amount, payments)
 
     return InvoiceSummary(
         id=invoice.id,
@@ -61,8 +60,7 @@ def _build_invoice_summary(invoice: InvoiceDTO, payments: list[PaymentDTO]) -> I
         description=invoice.description,
         paid_total=summary_paid_total,
         balance_due=summary_balance_due,
-        credit_amount=summary_credit_amount,
-        status=invoice_status(invoice.total_amount, payments),
+        status=invoice.status,
     )
 
 
@@ -71,5 +69,4 @@ def _statement_totals(invoice_summaries: list[InvoiceSummary]) -> StatementTotal
         invoiced_total=sum((item.total_amount for item in invoice_summaries), start=ZERO),
         paid_total=sum((item.paid_total for item in invoice_summaries), start=ZERO),
         balance_due_total=sum((item.balance_due for item in invoice_summaries), start=ZERO),
-        credit_total=sum((item.credit_amount for item in invoice_summaries), start=ZERO),
     )

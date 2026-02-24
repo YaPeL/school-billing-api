@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette import status
 
-from app.domain.errors import ConflictError, DomainError, NotFoundError
+from app.domain.errors import ConflictError, DomainError, DomainValidationError, NotFoundError
 
 
 async def not_found_error_handler(_request: Request, exc: NotFoundError) -> JSONResponse:
@@ -30,7 +30,15 @@ async def domain_error_handler(_request: Request, exc: DomainError) -> JSONRespo
     )
 
 
+async def domain_validation_error_handler(_request: Request, exc: DomainValidationError) -> JSONResponse:
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": exc.message()},
+    )
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(NotFoundError, cast(Any, not_found_error_handler))
     app.add_exception_handler(ConflictError, cast(Any, conflict_error_handler))
+    app.add_exception_handler(DomainValidationError, cast(Any, domain_validation_error_handler))
     app.add_exception_handler(DomainError, cast(Any, domain_error_handler))

@@ -55,4 +55,5 @@
 - [x] README badges (CI + type-check + tests) and quickstart/auth polish
 - [x] Ports + adapters sweet-spot refactor (domain DTO/errors, repo protocols, SQLAlchemy adapters, thin routers with use-case deps)
 - [x] Migrate DB-backed runtime paths to async SQLAlchemy 2.0 (`AsyncSession` + `postgresql+asyncpg`) and async FastAPI handlers
+- [x] Persist `invoice.status` + typed `payments.kind` (PAYMENT/REFUND), remove CREDIT status, and enforce no overpayment/over-refund in services
 - [ ] TODO: statement caching strategy (cache targets + invalidation plan)

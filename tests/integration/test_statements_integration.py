@@ -6,7 +6,7 @@ from decimal import Decimal
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dal.invoice import create_invoice
+from app.dal.invoice import create_invoice, update_invoice
 from app.dal.payment import create_payment
 from app.dal.repos.sqlalchemy_invoice_repo import SQLAlchemyInvoiceRepo
 from app.dal.repos.sqlalchemy_payment_repo import SQLAlchemyPaymentRepo
@@ -14,13 +14,13 @@ from app.dal.repos.sqlalchemy_school_repo import SQLAlchemySchoolRepo
 from app.dal.repos.sqlalchemy_student_repo import SQLAlchemyStudentRepo
 from app.dal.school import create_school
 from app.dal.student import create_student
-from app.domain.enums import InvoiceStatus
+from app.domain.enums import InvoiceStatus, PaymentKind
 from app.services.use_cases import GetSchoolStatement, GetStudentStatement
 
 
 @pytest.mark.integration
 @pytest.mark.anyio
-async def test_statements_with_real_postgres_support_partial_paid_and_credit(db_session: AsyncSession) -> None:
+async def test_statements_with_real_postgres_support_partial_paid_and_refund(db_session: AsyncSession) -> None:
     school = await create_school(db_session, data={"name": "Integration Academy"})
     student = await create_student(db_session, data={"school_id": school.id, "full_name": "Integration Student"})
 
@@ -51,19 +51,29 @@ async def test_statements_with_real_postgres_support_partial_paid_and_credit(db_
             "description": "Paid",
         },
     )
-    credit_invoice = await create_invoice(
+    refunded_invoice = await create_invoice(
         db_session,
         data={
             "student_id": student.id,
             "total_amount": Decimal("40.00"),
             "due_date": date(2026, 3, 30),
-            "description": "Credit",
+            "description": "Refunded",
         },
     )
 
     await create_payment(db_session, data={"invoice_id": partial_invoice.id, "amount": Decimal("50.00")})
     await create_payment(db_session, data={"invoice_id": paid_invoice.id, "amount": Decimal("60.00")})
-    await create_payment(db_session, data={"invoice_id": credit_invoice.id, "amount": Decimal("50.00")})
+    await create_payment(
+        db_session, data={"invoice_id": refunded_invoice.id, "amount": Decimal("40.00"), "kind": PaymentKind.PAYMENT}
+    )
+    await create_payment(
+        db_session, data={"invoice_id": refunded_invoice.id, "amount": Decimal("10.00"), "kind": PaymentKind.REFUND}
+    )
+
+    await update_invoice(db_session, pending_invoice.id, data={"status": InvoiceStatus.PENDING})
+    await update_invoice(db_session, partial_invoice.id, data={"status": InvoiceStatus.PARTIAL})
+    await update_invoice(db_session, paid_invoice.id, data={"status": InvoiceStatus.PAID})
+    await update_invoice(db_session, refunded_invoice.id, data={"status": InvoiceStatus.PARTIAL})
 
     student_statement = await GetStudentStatement(
         student_repo=SQLAlchemyStudentRepo(db_session),
@@ -73,15 +83,14 @@ async def test_statements_with_real_postgres_support_partial_paid_and_credit(db_
 
     assert student_statement.student_id == student.id
     assert student_statement.totals.invoiced_total == Decimal("280.00")
-    assert student_statement.totals.paid_total == Decimal("160.00")
-    assert student_statement.totals.balance_due_total == Decimal("120.00")
-    assert student_statement.totals.credit_total == Decimal("10.00")
+    assert student_statement.totals.paid_total == Decimal("150.00")
+    assert student_statement.totals.balance_due_total == Decimal("130.00")
 
     invoice_statuses = {invoice.id: invoice.status for invoice in student_statement.invoices}
     assert invoice_statuses[pending_invoice.id] == InvoiceStatus.PENDING
     assert invoice_statuses[partial_invoice.id] == InvoiceStatus.PARTIAL
     assert invoice_statuses[paid_invoice.id] == InvoiceStatus.PAID
-    assert invoice_statuses[credit_invoice.id] == InvoiceStatus.CREDIT
+    assert invoice_statuses[refunded_invoice.id] == InvoiceStatus.PARTIAL
 
     school_statement = await GetSchoolStatement(
         school_repo=SQLAlchemySchoolRepo(db_session),

@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dal.update_types import PaymentCreate, PaymentUpdate
+from app.domain.enums import PaymentKind
 from app.models.payment import Payment
 
 
@@ -15,6 +16,8 @@ async def create_payment(session: AsyncSession, data: PaymentCreate) -> Payment:
         method=data.get("method"),
         reference=data.get("reference"),
     )
+    kind = data.get("kind")
+    payment.kind = kind if kind is not None else PaymentKind.PAYMENT
     paid_at = data.get("paid_at")
     if paid_at is not None:
         payment.paid_at = paid_at
@@ -62,6 +65,8 @@ async def update_payment(
         payment.invoice_id = data["invoice_id"]
     if "amount" in data:
         payment.amount = data["amount"]
+    if "kind" in data:
+        payment.kind = data["kind"]
     if "method" in data:
         payment.method = data["method"]
     if "reference" in data:

@@ -5,6 +5,8 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
+from app.domain.enums import InvoiceStatus, PaymentKind
+
 
 @dataclass(frozen=True, slots=True)
 class SchoolDTO:
@@ -31,6 +33,7 @@ class InvoiceDTO:
     due_date: date
     issued_at: datetime
     description: str | None = None
+    status: InvoiceStatus = InvoiceStatus.PENDING
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -40,6 +43,7 @@ class PaymentDTO:
     id: UUID
     invoice_id: UUID
     amount: Decimal
+    kind: PaymentKind = PaymentKind.PAYMENT
     paid_at: datetime | None = None
     method: str | None = None
     reference: str | None = None

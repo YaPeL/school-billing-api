@@ -5,4 +5,8 @@ class InvoiceStatus(StrEnum):
     PENDING = "PENDING"
     PARTIAL = "PARTIAL"
     PAID = "PAID"
-    CREDIT = "CREDIT"
+
+
+class PaymentKind(StrEnum):
+    PAYMENT = "PAYMENT"
+    REFUND = "REFUND"

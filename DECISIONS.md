@@ -1,7 +1,9 @@
 # DECISIONS
 
 - Payments are first-class: invoices can have multiple payments (partial payments supported).
-- Invoice status is derived from payments; overpaid invoices use `CREDIT` status (PENDING/PARTIAL/PAID/CREDIT via `InvoiceStatus` enum).
+- Invoice status model is restricted to `PENDING`/`PARTIAL`/`PAID` and persisted on `invoices.status`.
+- Payment rows are typed movements via `payments.kind` (`PAYMENT` adds to net paid, `REFUND` subtracts from net paid).
+- Credit states are not allowed: service-level validation rejects net paid above `invoice.total_amount` and below zero.
 - DAL is the only layer touching SQLAlchemy `AsyncSession`; services orchestrate DAL and apply business rules.
 - Primary keys for School/Student/Invoice/Payment use UUIDv7; all related foreign keys are UUID.
 - DAL create/update inputs use TypedDict payloads (not many function params).
@@ -18,6 +20,7 @@
 - CI quality gates run in GitHub Actions on push/PR to `main` with Python 3.12 only (`ruff`, `mypy`, `pytest -m smoke`).
 - Integration tests are opt-in (`pytest -m integration`) and use a dedicated `TEST_DATABASE_URL` (never `DATABASE_URL` by default); they skip unless the URL is reachable, local-hosted, and explicitly test-named to prevent destructive TRUNCATE on non-test databases.
 - Domain-level errors (`DomainError`, `NotFoundError`, `ConflictError`) are the cross-layer error contract; FastAPI maps them to HTTP in one global handler module.
+- `PaymentUpdate.kind` is optional for PATCH semantics but explicitly non-null when present; `null` is treated as a client validation error.
 - Services depend on repo ports (`Protocol`) and DTOs, while SQLAlchemy implementations live in DAL adapters (`app/dal/repos/*`).
 - Statement generation and invoice-payments listing are explicit use-cases wired through FastAPI dependencies for testability without DB access.
 - Runtime DB access uses SQLAlchemy 2.x async API with `postgresql+asyncpg`; DB-backed FastAPI path handlers are async (`async def`) and await service/use-case calls.

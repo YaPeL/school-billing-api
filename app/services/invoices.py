@@ -1,16 +1,22 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from decimal import Decimal
+from typing import cast
 from uuid import UUID
 
 from app.api.constants import INVOICES
 from app.domain.dtos import InvoiceDTO
+from app.domain.enums import InvoiceStatus
 from app.domain.errors import NotFoundError
-from app.services.ports import InvoiceRepo
+from app.services.billing_rules import derive_invoice_status, net_paid_total, validate_net_paid_bounds
+from app.services.ports import InvoiceRepo, PaymentRepo
 
 
 async def create_invoice(repo: InvoiceRepo, data: Mapping[str, object]) -> InvoiceDTO:
-    return await repo.create(data)
+    payload = dict(data)
+    payload.setdefault("status", InvoiceStatus.PENDING)
+    return await repo.create(payload)
 
 
 async def list_invoices(repo: InvoiceRepo, *, offset: int, limit: int) -> list[InvoiceDTO]:
@@ -32,11 +38,28 @@ async def get_invoice_by_id(repo: InvoiceRepo, invoice_id: UUID) -> InvoiceDTO:
     return invoice
 
 
-async def update_invoice(repo: InvoiceRepo, invoice_id: UUID, data: Mapping[str, object]) -> InvoiceDTO:
-    invoice = await repo.update(invoice_id, data)
+async def update_invoice(
+    invoice_repo: InvoiceRepo,
+    payment_repo: PaymentRepo,
+    invoice_id: UUID,
+    data: Mapping[str, object],
+) -> InvoiceDTO:
+    invoice = await invoice_repo.get_by_id(invoice_id)
     if invoice is None:
         raise NotFoundError(INVOICES, str(invoice_id))
-    return invoice
+
+    next_total_amount = cast(Decimal, data.get("total_amount", invoice.total_amount))
+    payments = await payment_repo.list_by_invoice_id(invoice_id)
+    net_paid = net_paid_total(payments)
+    validate_net_paid_bounds(next_total_amount, net_paid)
+
+    payload = dict(data)
+    payload["status"] = derive_invoice_status(next_total_amount, net_paid)
+
+    updated = await invoice_repo.update(invoice_id, payload)
+    if updated is None:
+        raise NotFoundError(INVOICES, str(invoice_id))
+    return updated
 
 
 async def delete_invoice(repo: InvoiceRepo, invoice_id: UUID) -> bool:

@@ -6,17 +6,18 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Response, status
 
 from app.api.constants import DEFAULT_LIMIT, DEFAULT_OFFSET, MAX_LIMIT
-from app.api.deps import get_invoice_repo, get_list_invoice_payments_uc, require_admin
+from app.api.deps import get_invoice_repo, get_list_invoice_payments_uc, get_payment_repo, require_admin
 from app.schemas import InvoiceCreate, InvoiceRead, InvoiceUpdate, PaymentRead
 from app.schemas.auth import UserClaims
 from app.services import invoices as invoice_service
-from app.services.ports import InvoiceRepo
+from app.services.ports import InvoiceRepo, PaymentRepo
 from app.services.use_cases import ListInvoicePayments
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 
 InvoiceRepoDep = Annotated[InvoiceRepo, Depends(get_invoice_repo)]
 ListInvoicePaymentsUCDep = Annotated[ListInvoicePayments, Depends(get_list_invoice_payments_uc)]
+PaymentRepoDep = Annotated[PaymentRepo, Depends(get_payment_repo)]
 AdminUser = Annotated[UserClaims, Depends(require_admin)]
 
 
@@ -50,10 +51,17 @@ async def list_invoice_payments(invoice_id: UUID, use_case: ListInvoicePaymentsU
 
 @router.patch("/{invoice_id}", response_model=InvoiceRead)
 async def patch_invoice(
-    invoice_id: UUID, invoice_in: InvoiceUpdate, repo: InvoiceRepoDep, _admin: AdminUser
+    invoice_id: UUID,
+    invoice_in: InvoiceUpdate,
+    invoice_repo: InvoiceRepoDep,
+    payment_repo: PaymentRepoDep,
+    _admin: AdminUser,
 ) -> InvoiceRead:
     invoice = await invoice_service.update_invoice(
-        repo, invoice_id=invoice_id, data=invoice_in.model_dump(exclude_unset=True)
+        invoice_repo,
+        payment_repo,
+        invoice_id=invoice_id,
+        data=invoice_in.model_dump(exclude_unset=True),
     )
     return InvoiceRead.model_validate(invoice)
 

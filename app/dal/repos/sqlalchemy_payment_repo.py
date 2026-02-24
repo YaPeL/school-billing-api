@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.dal import payment as payment_dal
 from app.dal.update_types import PaymentCreate, PaymentUpdate
 from app.domain.dtos import PaymentDTO
+from app.domain.enums import PaymentKind
 from app.models.payment import Payment
 
 
@@ -22,6 +23,7 @@ class SQLAlchemyPaymentRepo:
         payload: PaymentCreate = {
             "invoice_id": cast(UUID, data["invoice_id"]),
             "amount": cast(Decimal, data["amount"]),
+            "kind": cast(PaymentKind, data.get("kind", PaymentKind.PAYMENT)),
         }
         if "method" in data:
             payload["method"] = cast(str | None, data["method"])
@@ -55,6 +57,8 @@ class SQLAlchemyPaymentRepo:
             payload["invoice_id"] = cast(UUID, data["invoice_id"])
         if "amount" in data:
             payload["amount"] = cast(Decimal, data["amount"])
+        if "kind" in data:
+            payload["kind"] = cast(PaymentKind, data["kind"])
         if "paid_at" in data:
             payload["paid_at"] = cast(datetime | None, data["paid_at"])
         if "method" in data:
@@ -74,6 +78,7 @@ def _to_payment_dto(payment: Payment) -> PaymentDTO:
         id=payment.id,
         invoice_id=payment.invoice_id,
         amount=payment.amount,
+        kind=payment.kind,
         paid_at=payment.paid_at,
         method=payment.method,
         reference=payment.reference,

@@ -5,6 +5,7 @@ import pytest
 from pydantic import ValidationError
 from uuid_extensions import uuid7
 
+from app.domain.enums import PaymentKind
 from app.schemas.invoice import InvoiceCreate
 from app.schemas.payment import PaymentCreate
 
@@ -27,3 +28,9 @@ def test_invoice_create_rejects_non_positive_total_amount(amount: Decimal) -> No
 def test_payment_create_rejects_non_positive_amount(amount: Decimal) -> None:
     with pytest.raises(ValidationError):
         PaymentCreate(invoice_id=uuid7(), amount=amount)
+
+
+@pytest.mark.smoke
+def test_payment_create_defaults_kind_to_payment() -> None:
+    schema = PaymentCreate(invoice_id=uuid7(), amount=Decimal("10.00"))
+    assert schema.kind == PaymentKind.PAYMENT

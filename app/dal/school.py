@@ -1,47 +1,48 @@
 import uuid
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dal.update_types import SchoolCreate, SchoolUpdate
 from app.models.school import School
 
 
-def create_school(session: Session, data: SchoolCreate) -> School:
+async def create_school(session: AsyncSession, data: SchoolCreate) -> School:
     school = School(name=data["name"])
     session.add(school)
-    session.commit()
-    session.refresh(school)
+    await session.commit()
+    await session.refresh(school)
     return school
 
 
-def get_school_by_id(session: Session, school_id: uuid.UUID) -> School | None:
-    return session.get(School, school_id)
+async def get_school_by_id(session: AsyncSession, school_id: uuid.UUID) -> School | None:
+    return await session.get(School, school_id)
 
 
-def list_schools(session: Session, *, offset: int = 0, limit: int = 100) -> list[School]:
+async def list_schools(session: AsyncSession, *, offset: int = 0, limit: int = 100) -> list[School]:
     stmt = select(School).offset(offset).limit(limit)
-    return list(session.scalars(stmt))
+    result = await session.scalars(stmt)
+    return list(result)
 
 
-def update_school(session: Session, school_id: uuid.UUID, data: SchoolUpdate) -> School | None:
-    school = get_school_by_id(session, school_id)
+async def update_school(session: AsyncSession, school_id: uuid.UUID, data: SchoolUpdate) -> School | None:
+    school = await get_school_by_id(session, school_id)
     if school is None:
         return None
 
     if "name" in data:
         school.name = data["name"]
 
-    session.commit()
-    session.refresh(school)
+    await session.commit()
+    await session.refresh(school)
     return school
 
 
-def delete_school(session: Session, school_id: uuid.UUID) -> bool:
-    school = get_school_by_id(session, school_id)
+async def delete_school(session: AsyncSession, school_id: uuid.UUID) -> bool:
+    school = await get_school_by_id(session, school_id)
     if school is None:
         return False
 
-    session.delete(school)
-    session.commit()
+    await session.delete(school)
+    await session.commit()
     return True

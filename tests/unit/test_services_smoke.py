@@ -13,11 +13,16 @@ from app.services import billing_rules
 from app.services.use_cases import GetSchoolStatement, GetStudentStatement, ListInvoicePayments
 
 
+@pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"
+
+
 class FakeSchoolRepo:
     def __init__(self, schools: dict[object, SchoolDTO]) -> None:
         self.schools = schools
 
-    def get_by_id(self, school_id: object) -> SchoolDTO | None:
+    async def get_by_id(self, school_id: object) -> SchoolDTO | None:
         return self.schools.get(school_id)
 
 
@@ -26,10 +31,10 @@ class FakeStudentRepo:
         self.students = students
         self.by_school = by_school
 
-    def get_by_id(self, student_id: object) -> StudentDTO | None:
+    async def get_by_id(self, student_id: object) -> StudentDTO | None:
         return self.students.get(student_id)
 
-    def list_by_school_id(self, school_id: object, *, offset: int = 0, limit: int = 100) -> list[StudentDTO]:
+    async def list_by_school_id(self, school_id: object, *, offset: int = 0, limit: int = 100) -> list[StudentDTO]:
         return self.by_school.get(school_id, [])[offset : offset + limit]
 
 
@@ -44,13 +49,13 @@ class FakeInvoiceRepo:
         self.by_student = by_student
         self.by_students = by_students
 
-    def get_by_id(self, invoice_id: object) -> InvoiceDTO | None:
+    async def get_by_id(self, invoice_id: object) -> InvoiceDTO | None:
         return self.invoices_by_id.get(invoice_id)
 
-    def list_by_student_id(self, student_id: object) -> list[InvoiceDTO]:
+    async def list_by_student_id(self, student_id: object) -> list[InvoiceDTO]:
         return self.by_student.get(student_id, [])
 
-    def list_by_student_ids(self, student_ids: list[object]) -> list[InvoiceDTO]:
+    async def list_by_student_ids(self, student_ids: list[object]) -> list[InvoiceDTO]:
         return self.by_students.get(tuple(student_ids), [])
 
 
@@ -58,10 +63,10 @@ class FakePaymentRepo:
     def __init__(self, by_invoice: dict[object, list[PaymentDTO]]) -> None:
         self.by_invoice = by_invoice
 
-    def list_by_invoice_id(self, invoice_id: object) -> list[PaymentDTO]:
+    async def list_by_invoice_id(self, invoice_id: object) -> list[PaymentDTO]:
         return self.by_invoice.get(invoice_id, [])
 
-    def list_by_invoice_ids(self, invoice_ids: list[object]) -> list[PaymentDTO]:
+    async def list_by_invoice_ids(self, invoice_ids: list[object]) -> list[PaymentDTO]:
         payments: list[PaymentDTO] = []
         for invoice_id in invoice_ids:
             payments.extend(self.by_invoice.get(invoice_id, []))
@@ -87,7 +92,8 @@ def test_business_rule_helpers_support_partial_paid_and_credit() -> None:
 
 
 @pytest.mark.smoke
-def test_get_student_statement_use_case_aggregates_totals() -> None:
+@pytest.mark.anyio
+async def test_get_student_statement_use_case_aggregates_totals() -> None:
     school_id = uuid7()
     student_id = uuid7()
     invoice_1_id = uuid7()
@@ -124,7 +130,7 @@ def test_get_student_statement_use_case_aggregates_totals() -> None:
         payment_repo=payment_repo,
     )
 
-    statement = use_case(student_id)
+    statement = await use_case(student_id)
 
     assert statement.student_id == student_id
     assert statement.school_id == school_id
@@ -136,7 +142,8 @@ def test_get_student_statement_use_case_aggregates_totals() -> None:
 
 
 @pytest.mark.smoke
-def test_get_school_statement_use_case_aggregates_across_students() -> None:
+@pytest.mark.anyio
+async def test_get_school_statement_use_case_aggregates_across_students() -> None:
     school_id = uuid7()
     student_1_id = uuid7()
     student_2_id = uuid7()
@@ -180,7 +187,7 @@ def test_get_school_statement_use_case_aggregates_across_students() -> None:
         payment_repo=payment_repo,
     )
 
-    statement = use_case(school_id)
+    statement = await use_case(school_id)
 
     assert statement.school_id == school_id
     assert statement.students_count == 2
@@ -192,7 +199,8 @@ def test_get_school_statement_use_case_aggregates_across_students() -> None:
 
 
 @pytest.mark.smoke
-def test_use_cases_raise_not_found_for_missing_entities() -> None:
+@pytest.mark.anyio
+async def test_use_cases_raise_not_found_for_missing_entities() -> None:
     missing_id = uuid7()
 
     student_statement_uc = GetStudentStatement(
@@ -214,10 +222,10 @@ def test_use_cases_raise_not_found_for_missing_entities() -> None:
     )
 
     with pytest.raises(NotFoundError):
-        student_statement_uc(missing_id)
+        await student_statement_uc(missing_id)
 
     with pytest.raises(NotFoundError):
-        school_statement_uc(missing_id)
+        await school_statement_uc(missing_id)
 
     with pytest.raises(NotFoundError):
-        invoice_payments_uc(missing_id)
+        await invoice_payments_uc(missing_id)

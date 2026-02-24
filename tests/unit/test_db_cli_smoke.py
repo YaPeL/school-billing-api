@@ -2,11 +2,16 @@ from __future__ import annotations
 
 import subprocess
 import sys
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from app.db import cli
+
+
+@pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"
 
 
 @pytest.mark.smoke
@@ -34,34 +39,48 @@ def test_db_revision_runs_alembic_revision(monkeypatch: pytest.MonkeyPatch) -> N
 
 
 @pytest.mark.smoke
-def test_db_seed_commits_on_success(monkeypatch: pytest.MonkeyPatch) -> None:
-    session = MagicMock()
-    seed_mock = MagicMock()
+@pytest.mark.anyio
+async def test_db_seed_commits_on_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = AsyncMock()
+    seed_mock = AsyncMock()
 
-    monkeypatch.setattr(cli, "SessionLocal", lambda: session)
+    class SessionFactory:
+        async def __aenter__(self) -> AsyncMock:
+            return session
+
+        async def __aexit__(self, exc_type: object, exc: object, tb: object) -> None:
+            return None
+
+    monkeypatch.setattr(cli, "SessionLocal", lambda: SessionFactory())
     monkeypatch.setattr(cli, "seed_db", seed_mock)
 
-    cli.db_seed()
+    await cli._db_seed_async()
 
-    seed_mock.assert_called_once_with(session)
-    session.commit.assert_called_once_with()
+    seed_mock.assert_awaited_once_with(session)
+    session.commit.assert_awaited_once_with()
     session.rollback.assert_not_called()
-    session.close.assert_called_once_with()
 
 
 @pytest.mark.smoke
-def test_db_seed_rolls_back_on_failure(monkeypatch: pytest.MonkeyPatch) -> None:
-    session = MagicMock()
+@pytest.mark.anyio
+async def test_db_seed_rolls_back_on_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = AsyncMock()
 
-    def fail_seed(_session: object) -> None:
+    async def fail_seed(_session: object) -> None:
         raise RuntimeError("seed failed")
 
-    monkeypatch.setattr(cli, "SessionLocal", lambda: session)
+    class SessionFactory:
+        async def __aenter__(self) -> AsyncMock:
+            return session
+
+        async def __aexit__(self, exc_type: object, exc: object, tb: object) -> None:
+            return None
+
+    monkeypatch.setattr(cli, "SessionLocal", lambda: SessionFactory())
     monkeypatch.setattr(cli, "seed_db", fail_seed)
 
     with pytest.raises(RuntimeError, match="seed failed"):
-        cli.db_seed()
+        await cli._db_seed_async()
 
     session.commit.assert_not_called()
-    session.rollback.assert_called_once_with()
-    session.close.assert_called_once_with()
+    session.rollback.assert_awaited_once_with()

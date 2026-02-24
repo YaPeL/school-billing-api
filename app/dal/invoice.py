@@ -2,13 +2,13 @@ import uuid
 from collections.abc import Sequence
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dal.update_types import InvoiceCreate, InvoiceUpdate
 from app.models.invoice import Invoice
 
 
-def create_invoice(session: Session, data: InvoiceCreate) -> Invoice:
+async def create_invoice(session: AsyncSession, data: InvoiceCreate) -> Invoice:
     invoice = Invoice(
         student_id=data["student_id"],
         total_amount=data["total_amount"],
@@ -20,38 +20,41 @@ def create_invoice(session: Session, data: InvoiceCreate) -> Invoice:
         invoice.issued_at = issued_at
 
     session.add(invoice)
-    session.commit()
-    session.refresh(invoice)
+    await session.commit()
+    await session.refresh(invoice)
     return invoice
 
 
-def get_invoice_by_id(session: Session, invoice_id: uuid.UUID) -> Invoice | None:
-    return session.get(Invoice, invoice_id)
+async def get_invoice_by_id(session: AsyncSession, invoice_id: uuid.UUID) -> Invoice | None:
+    return await session.get(Invoice, invoice_id)
 
 
-def list_invoices(session: Session, *, offset: int = 0, limit: int = 100) -> list[Invoice]:
+async def list_invoices(session: AsyncSession, *, offset: int = 0, limit: int = 100) -> list[Invoice]:
     stmt = select(Invoice).offset(offset).limit(limit)
-    return list(session.scalars(stmt))
+    result = await session.scalars(stmt)
+    return list(result)
 
 
-def list_invoices_by_student_id(session: Session, student_id: uuid.UUID) -> list[Invoice]:
+async def list_invoices_by_student_id(session: AsyncSession, student_id: uuid.UUID) -> list[Invoice]:
     stmt = select(Invoice).where(Invoice.student_id == student_id)
-    return list(session.scalars(stmt))
+    result = await session.scalars(stmt)
+    return list(result)
 
 
-def list_invoices_by_student_ids(session: Session, student_ids: Sequence[uuid.UUID]) -> list[Invoice]:
+async def list_invoices_by_student_ids(session: AsyncSession, student_ids: Sequence[uuid.UUID]) -> list[Invoice]:
     if not student_ids:
         return []
     stmt = select(Invoice).where(Invoice.student_id.in_(student_ids))
-    return list(session.scalars(stmt))
+    result = await session.scalars(stmt)
+    return list(result)
 
 
-def update_invoice(
-    session: Session,
+async def update_invoice(
+    session: AsyncSession,
     invoice_id: uuid.UUID,
     data: InvoiceUpdate,
 ) -> Invoice | None:
-    invoice = get_invoice_by_id(session, invoice_id)
+    invoice = await get_invoice_by_id(session, invoice_id)
     if invoice is None:
         return None
 
@@ -66,16 +69,16 @@ def update_invoice(
     if "issued_at" in data and data["issued_at"] is not None:
         invoice.issued_at = data["issued_at"]
 
-    session.commit()
-    session.refresh(invoice)
+    await session.commit()
+    await session.refresh(invoice)
     return invoice
 
 
-def delete_invoice(session: Session, invoice_id: uuid.UUID) -> bool:
-    invoice = get_invoice_by_id(session, invoice_id)
+async def delete_invoice(session: AsyncSession, invoice_id: uuid.UUID) -> bool:
+    invoice = await get_invoice_by_id(session, invoice_id)
     if invoice is None:
         return False
 
-    session.delete(invoice)
-    session.commit()
+    await session.delete(invoice)
+    await session.commit()
     return True

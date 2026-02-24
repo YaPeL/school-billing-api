@@ -1,42 +1,44 @@
 import uuid
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dal.update_types import StudentCreate, StudentUpdate
 from app.models.student import Student
 
 
-def create_student(session: Session, data: StudentCreate) -> Student:
+async def create_student(session: AsyncSession, data: StudentCreate) -> Student:
     student = Student(school_id=data["school_id"], full_name=data["full_name"])
     session.add(student)
-    session.commit()
-    session.refresh(student)
+    await session.commit()
+    await session.refresh(student)
     return student
 
 
-def get_student_by_id(session: Session, student_id: uuid.UUID) -> Student | None:
-    return session.get(Student, student_id)
+async def get_student_by_id(session: AsyncSession, student_id: uuid.UUID) -> Student | None:
+    return await session.get(Student, student_id)
 
 
-def list_students(session: Session, *, offset: int = 0, limit: int = 100) -> list[Student]:
+async def list_students(session: AsyncSession, *, offset: int = 0, limit: int = 100) -> list[Student]:
     stmt = select(Student).offset(offset).limit(limit)
-    return list(session.scalars(stmt))
+    result = await session.scalars(stmt)
+    return list(result)
 
 
-def list_students_by_school_id(
-    session: Session, school_id: uuid.UUID, offset: int = 0, limit: int = 100
+async def list_students_by_school_id(
+    session: AsyncSession, school_id: uuid.UUID, offset: int = 0, limit: int = 100
 ) -> list[Student]:
     stmt = select(Student).where(Student.school_id == school_id).offset(offset).limit(limit)
-    return list(session.scalars(stmt))
+    result = await session.scalars(stmt)
+    return list(result)
 
 
-def update_student(
-    session: Session,
+async def update_student(
+    session: AsyncSession,
     student_id: uuid.UUID,
     data: StudentUpdate,
 ) -> Student | None:
-    student = get_student_by_id(session, student_id)
+    student = await get_student_by_id(session, student_id)
     if student is None:
         return None
 
@@ -45,16 +47,16 @@ def update_student(
     if "full_name" in data:
         student.full_name = data["full_name"]
 
-    session.commit()
-    session.refresh(student)
+    await session.commit()
+    await session.refresh(student)
     return student
 
 
-def delete_student(session: Session, student_id: uuid.UUID) -> bool:
-    student = get_student_by_id(session, student_id)
+async def delete_student(session: AsyncSession, student_id: uuid.UUID) -> bool:
+    student = await get_student_by_id(session, student_id)
     if student is None:
         return False
 
-    session.delete(student)
-    session.commit()
+    await session.delete(student)
+    await session.commit()
     return True

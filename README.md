@@ -62,7 +62,7 @@ Read endpoints remain public (`GET` schools/students/invoices/payments, statemen
   - Create isolated test DB:
     - `docker compose exec -T db psql -U school_billing -d postgres -c "CREATE DATABASE school_billing_test;"`
   - Export test DB URL:
-    - `export TEST_DATABASE_URL=postgresql+psycopg://school_billing:school_billing@localhost:5432/school_billing_test`
+    - `export TEST_DATABASE_URL=postgresql+asyncpg://school_billing:school_billing@localhost:5432/school_billing_test`
   - Run:
     - `poetry run pytest -m integration`
 
@@ -75,30 +75,6 @@ Integration tests are skipped unless `TEST_DATABASE_URL` is set, points to a loc
 - CI runs `ruff`, `mypy`, and smoke tests on push/PR to `main`
 
 ## TODO / Future improvements
-
-### Async DB + fully async API
-- Switch to an **async SQLAlchemy stack** so endpoints can be truly async end-to-end:
-  - Use an async driver (eg `asyncpg`) + `create_async_engine`
-  - Replace `Session` with `AsyncSession` + async dependency (`async with` session)
-  - Update DAL to `async def` and use `await session.execute(...)`
-  - Ensure middleware + auth deps remain compatible with async execution
-- Goal: remove sync DB calls from async routes and make the whole request path non-blocking.
-
-### Layer contracts (Service <-> DAL)
-- Replace `TypedDict` update payloads with a **Patch dataclass + `UNSET` sentinel** to make partial updates explicit:
-  - `UNSET` = field not provided (do not touch)
-  - `None` = explicitly set to NULL (if allowed)
-  - value = set value
-- Prefer returning **DTO dataclasses** from DAL (instead of ORM objects) to avoid accidental lazy-loads and to improve testability.
-
-### Error handling: integrity / constraint mapping
-- Map DB constraint errors (`IntegrityError`) to clean API errors (409/422) with readable messages.
-- Example:
-  - Deleting an invoice with payments attached currently yields a 500.
-  - Preferred behavior:
-    - Option A: 409 Conflict with message like "Cannot delete invoice with payments"
-    - Option B: enforce cascade rules explicitly (only if product wants it)
-- Add a small error-mapper layer (DB exception -> domain/API error) and reuse it across routes.
 
 ### Caching (Redis)
 - Add optional Redis caching for **statements** (student/school):

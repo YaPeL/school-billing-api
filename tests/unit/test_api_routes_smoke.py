@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import httpx
 import pytest
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import decode_access_token
 from app.core.settings import settings
@@ -20,8 +20,8 @@ def anyio_backend() -> str:
 
 @pytest.fixture
 def override_db() -> Generator[None, None, None]:
-    async def override_get_db() -> AsyncGenerator[Session, None]:
-        yield MagicMock(spec=Session)
+    async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
+        yield MagicMock(spec=AsyncSession)
 
     app.dependency_overrides[get_db] = override_get_db
     try:

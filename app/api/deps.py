@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import decode_access_token
 from app.dal.repos.sqlalchemy_invoice_repo import SQLAlchemyInvoiceRepo
@@ -48,19 +48,19 @@ async def require_admin(current_user: Annotated[UserClaims, Depends(get_current_
     return current_user
 
 
-async def get_school_repo(session: Annotated[Session, Depends(get_db)]) -> SchoolRepo:
+async def get_school_repo(session: Annotated[AsyncSession, Depends(get_db)]) -> SchoolRepo:
     return SQLAlchemySchoolRepo(session)
 
 
-async def get_student_repo(session: Annotated[Session, Depends(get_db)]) -> StudentRepo:
+async def get_student_repo(session: Annotated[AsyncSession, Depends(get_db)]) -> StudentRepo:
     return SQLAlchemyStudentRepo(session)
 
 
-async def get_invoice_repo(session: Annotated[Session, Depends(get_db)]) -> InvoiceRepo:
+async def get_invoice_repo(session: Annotated[AsyncSession, Depends(get_db)]) -> InvoiceRepo:
     return SQLAlchemyInvoiceRepo(session)
 
 
-async def get_payment_repo(session: Annotated[Session, Depends(get_db)]) -> PaymentRepo:
+async def get_payment_repo(session: Annotated[AsyncSession, Depends(get_db)]) -> PaymentRepo:
     return SQLAlchemyPaymentRepo(session)
 
 

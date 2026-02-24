@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import subprocess
 
 from app.db.seed import seed_db
@@ -23,12 +24,14 @@ def db_revision() -> None:
 
 
 def db_seed() -> None:
-    session = SessionLocal()
-    try:
-        seed_db(session)
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
+    asyncio.run(_db_seed_async())
+
+
+async def _db_seed_async() -> None:
+    async with SessionLocal() as session:
+        try:
+            await seed_db(session)
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise

@@ -1,9 +1,9 @@
 from datetime import date
 from decimal import Decimal
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_extensions import uuid7
 
 from app.dal.invoice import create_invoice, delete_invoice, get_invoice_by_id, list_invoices, update_invoice
@@ -16,78 +16,92 @@ from app.models.school import School
 from app.models.student import Student
 
 
+@pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"
+
+
+def _session_mock() -> AsyncMock:
+    session = AsyncMock(spec=AsyncSession)
+    session.add = MagicMock()
+    return session
+
+
 @pytest.mark.smoke
-def test_school_crud_uses_session_methods() -> None:
-    session = MagicMock(spec=Session)
+@pytest.mark.anyio
+async def test_school_crud_uses_session_methods() -> None:
+    session = _session_mock()
     school_id = uuid7()
 
-    created = create_school(session, data={"name": "Hogwarts"})
+    created = await create_school(session, data={"name": "Hogwarts"})
     assert isinstance(created, School)
     assert created.name == "Hogwarts"
     session.add.assert_called_once_with(created)
-    session.commit.assert_called_once()
-    session.refresh.assert_called_once_with(created)
+    session.commit.assert_awaited_once()
+    session.refresh.assert_awaited_once_with(created)
 
     session.get.return_value = created
-    fetched = get_school_by_id(session, school_id=school_id)
+    fetched = await get_school_by_id(session, school_id=school_id)
     assert fetched is created
-    session.get.assert_called_with(School, school_id)
+    session.get.assert_awaited_with(School, school_id)
 
     session.scalars.return_value = [created]
-    listed = list_schools(session, offset=5, limit=10)
+    listed = await list_schools(session, offset=5, limit=10)
     assert listed == [created]
-    session.scalars.assert_called_once()
+    session.scalars.assert_awaited_once()
 
     session.get.return_value = created
-    updated = update_school(session, school_id=school_id, data={"name": "Beauxbatons"})
+    updated = await update_school(session, school_id=school_id, data={"name": "Beauxbatons"})
     assert updated is created
     assert created.name == "Beauxbatons"
 
     session.get.return_value = created
-    deleted = delete_school(session, school_id=school_id)
+    deleted = await delete_school(session, school_id=school_id)
     assert deleted is True
-    session.delete.assert_called_with(created)
+    session.delete.assert_awaited_with(created)
 
 
 @pytest.mark.smoke
-def test_student_crud_uses_session_methods() -> None:
-    session = MagicMock(spec=Session)
+@pytest.mark.anyio
+async def test_student_crud_uses_session_methods() -> None:
+    session = _session_mock()
     school_id = uuid7()
     student_id = uuid7()
 
-    created = create_student(session, data={"school_id": school_id, "full_name": "Hermione Granger"})
+    created = await create_student(session, data={"school_id": school_id, "full_name": "Hermione Granger"})
     assert isinstance(created, Student)
     assert created.school_id == school_id
     assert created.full_name == "Hermione Granger"
     session.add.assert_called_once_with(created)
 
     session.get.return_value = created
-    fetched = get_student_by_id(session, student_id=student_id)
+    fetched = await get_student_by_id(session, student_id=student_id)
     assert fetched is created
-    session.get.assert_called_with(Student, student_id)
+    session.get.assert_awaited_with(Student, student_id)
 
     session.scalars.return_value = [created]
-    listed = list_students(session)
+    listed = await list_students(session)
     assert listed == [created]
 
     session.get.return_value = created
-    updated = update_student(session, student_id=student_id, data={"full_name": "H. Granger"})
+    updated = await update_student(session, student_id=student_id, data={"full_name": "H. Granger"})
     assert updated is created
     assert created.full_name == "H. Granger"
 
     session.get.return_value = created
-    deleted = delete_student(session, student_id=student_id)
+    deleted = await delete_student(session, student_id=student_id)
     assert deleted is True
-    session.delete.assert_called_with(created)
+    session.delete.assert_awaited_with(created)
 
 
 @pytest.mark.smoke
-def test_invoice_crud_uses_session_methods() -> None:
-    session = MagicMock(spec=Session)
+@pytest.mark.anyio
+async def test_invoice_crud_uses_session_methods() -> None:
+    session = _session_mock()
     student_id = uuid7()
     invoice_id = uuid7()
 
-    created = create_invoice(
+    created = await create_invoice(
         session,
         data={
             "student_id": student_id,
@@ -103,32 +117,33 @@ def test_invoice_crud_uses_session_methods() -> None:
     assert created.description == "Tuition"
 
     session.get.return_value = created
-    fetched = get_invoice_by_id(session, invoice_id=invoice_id)
+    fetched = await get_invoice_by_id(session, invoice_id=invoice_id)
     assert fetched is created
-    session.get.assert_called_with(Invoice, invoice_id)
+    session.get.assert_awaited_with(Invoice, invoice_id)
 
     session.scalars.return_value = [created]
-    listed = list_invoices(session)
+    listed = await list_invoices(session)
     assert listed == [created]
 
     session.get.return_value = created
-    updated = update_invoice(session, invoice_id=invoice_id, data={"total_amount": Decimal("120.00")})
+    updated = await update_invoice(session, invoice_id=invoice_id, data={"total_amount": Decimal("120.00")})
     assert updated is created
     assert created.total_amount == Decimal("120.00")
 
     session.get.return_value = created
-    deleted = delete_invoice(session, invoice_id=invoice_id)
+    deleted = await delete_invoice(session, invoice_id=invoice_id)
     assert deleted is True
-    session.delete.assert_called_with(created)
+    session.delete.assert_awaited_with(created)
 
 
 @pytest.mark.smoke
-def test_payment_crud_uses_session_methods() -> None:
-    session = MagicMock(spec=Session)
+@pytest.mark.anyio
+async def test_payment_crud_uses_session_methods() -> None:
+    session = _session_mock()
     invoice_id = uuid7()
     payment_id = uuid7()
 
-    created = create_payment(
+    created = await create_payment(
         session,
         data={
             "invoice_id": invoice_id,
@@ -144,37 +159,38 @@ def test_payment_crud_uses_session_methods() -> None:
     assert created.reference == "ABC123"
 
     session.get.return_value = created
-    fetched = get_payment_by_id(session, payment_id=payment_id)
+    fetched = await get_payment_by_id(session, payment_id=payment_id)
     assert fetched is created
-    session.get.assert_called_with(Payment, payment_id)
+    session.get.assert_awaited_with(Payment, payment_id)
 
     session.scalars.return_value = [created]
-    listed = list_payments(session)
+    listed = await list_payments(session)
     assert listed == [created]
 
     session.get.return_value = created
-    updated = update_payment(session, payment_id=payment_id, data={"amount": Decimal("30.00")})
+    updated = await update_payment(session, payment_id=payment_id, data={"amount": Decimal("30.00")})
     assert updated is created
     assert created.amount == Decimal("30.00")
 
     session.get.return_value = created
-    deleted = delete_payment(session, payment_id=payment_id)
+    deleted = await delete_payment(session, payment_id=payment_id)
     assert deleted is True
-    session.delete.assert_called_with(created)
+    session.delete.assert_awaited_with(created)
 
 
 @pytest.mark.smoke
-def test_update_and_delete_return_none_or_false_when_record_does_not_exist() -> None:
-    session = MagicMock(spec=Session)
+@pytest.mark.anyio
+async def test_update_and_delete_return_none_or_false_when_record_does_not_exist() -> None:
+    session = _session_mock()
     missing_id = uuid7()
     session.get.return_value = None
 
-    assert update_school(session, school_id=missing_id, data={"name": "Missing"}) is None
-    assert update_student(session, student_id=missing_id, data={"full_name": "Missing"}) is None
-    assert update_invoice(session, invoice_id=missing_id, data={"total_amount": Decimal("1.00")}) is None
-    assert update_payment(session, payment_id=missing_id, data={"amount": Decimal("1.00")}) is None
+    assert await update_school(session, school_id=missing_id, data={"name": "Missing"}) is None
+    assert await update_student(session, student_id=missing_id, data={"full_name": "Missing"}) is None
+    assert await update_invoice(session, invoice_id=missing_id, data={"total_amount": Decimal("1.00")}) is None
+    assert await update_payment(session, payment_id=missing_id, data={"amount": Decimal("1.00")}) is None
 
-    assert delete_school(session, school_id=missing_id) is False
-    assert delete_student(session, student_id=missing_id) is False
-    assert delete_invoice(session, invoice_id=missing_id) is False
-    assert delete_payment(session, payment_id=missing_id) is False
+    assert await delete_school(session, school_id=missing_id) is False
+    assert await delete_student(session, student_id=missing_id) is False
+    assert await delete_invoice(session, invoice_id=missing_id) is False
+    assert await delete_payment(session, payment_id=missing_id) is False

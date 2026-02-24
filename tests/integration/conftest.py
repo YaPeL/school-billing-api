@@ -1,18 +1,23 @@
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import AsyncGenerator
 from os import getenv
 
 import pytest
-from sqlalchemy import create_engine, text
-from sqlalchemy.engine import Engine
+import pytest_asyncio
+from sqlalchemy import text
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
 from app.db.base import Base
 
 LOCAL_TEST_DB_HOSTS = {"localhost", "127.0.0.1", "::1"}
+
+
+@pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"
 
 
 def _is_test_database_name(database_name: str) -> bool:
@@ -49,33 +54,29 @@ def get_test_db_url_or_skip() -> str:
     return test_database_url
 
 
-@pytest.fixture(scope="session")
-def integration_engine() -> Generator[Engine, None, None]:
+@pytest_asyncio.fixture(scope="session")
+async def integration_engine() -> AsyncGenerator[AsyncEngine, None]:
     test_database_url = get_test_db_url_or_skip()
-    engine = create_engine(test_database_url, pool_pre_ping=True)
+    engine = create_async_engine(test_database_url, pool_pre_ping=True)
 
     try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        Base.metadata.create_all(bind=engine)
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+            await conn.run_sync(Base.metadata.create_all)
     except SQLAlchemyError as exc:
         pytest.skip(f"Integration DB unavailable at {test_database_url}: {exc}")
 
     try:
         yield engine
     finally:
-        engine.dispose()
+        await engine.dispose()
 
 
-@pytest.fixture()
-def db_session(integration_engine: Engine) -> Generator[Session, None, None]:
-    session_local = sessionmaker(bind=integration_engine, autoflush=False, autocommit=False)
-    session = session_local()
+@pytest_asyncio.fixture()
+async def db_session(integration_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
+    session_local = async_sessionmaker(bind=integration_engine, autoflush=False, expire_on_commit=False)
+    async with session_local() as session:
+        await session.execute(text("TRUNCATE TABLE payments, invoices, students, schools RESTART IDENTITY CASCADE"))
+        await session.commit()
 
-    session.execute(text("TRUNCATE TABLE payments, invoices, students, schools RESTART IDENTITY CASCADE"))
-    session.commit()
-
-    try:
         yield session
-    finally:
-        session.close()

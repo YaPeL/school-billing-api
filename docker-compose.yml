@@ -18,7 +18,7 @@ services:
   api:
     build: .
     environment:
-      DATABASE_URL: postgresql+psycopg://school_billing:school_billing@db:5432/school_billing
+      DATABASE_URL: postgresql+asyncpg://school_billing:school_billing@db:5432/school_billing
       JWT_SECRET: change_me
       JWT_ALGORITHM: HS256
       ADMIN_USERNAME: admin

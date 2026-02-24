@@ -54,5 +54,5 @@
 - [x] GitHub Actions CI (push/PR to main, Python 3.12, ruff + mypy + smoke)
 - [x] README badges (CI + type-check + tests) and quickstart/auth polish
 - [x] Ports + adapters sweet-spot refactor (domain DTO/errors, repo protocols, SQLAlchemy adapters, thin routers with use-case deps)
-- [x] Convert DB-backed FastAPI handlers to sync `def` to avoid blocking the event loop with sync SQLAlchemy calls
+- [x] Migrate DB-backed runtime paths to async SQLAlchemy 2.0 (`AsyncSession` + `postgresql+asyncpg`) and async FastAPI handlers
 - [ ] TODO: statement caching strategy (cache targets + invalidation plan)

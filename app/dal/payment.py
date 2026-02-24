@@ -2,13 +2,13 @@ import uuid
 from collections.abc import Sequence
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dal.update_types import PaymentCreate, PaymentUpdate
 from app.models.payment import Payment
 
 
-def create_payment(session: Session, data: PaymentCreate) -> Payment:
+async def create_payment(session: AsyncSession, data: PaymentCreate) -> Payment:
     payment = Payment(
         invoice_id=data["invoice_id"],
         amount=data["amount"],
@@ -20,38 +20,41 @@ def create_payment(session: Session, data: PaymentCreate) -> Payment:
         payment.paid_at = paid_at
 
     session.add(payment)
-    session.commit()
-    session.refresh(payment)
+    await session.commit()
+    await session.refresh(payment)
     return payment
 
 
-def get_payment_by_id(session: Session, payment_id: uuid.UUID) -> Payment | None:
-    return session.get(Payment, payment_id)
+async def get_payment_by_id(session: AsyncSession, payment_id: uuid.UUID) -> Payment | None:
+    return await session.get(Payment, payment_id)
 
 
-def list_payments(session: Session, *, offset: int = 0, limit: int = 100) -> list[Payment]:
+async def list_payments(session: AsyncSession, *, offset: int = 0, limit: int = 100) -> list[Payment]:
     stmt = select(Payment).offset(offset).limit(limit)
-    return list(session.scalars(stmt))
+    result = await session.scalars(stmt)
+    return list(result)
 
 
-def list_payments_by_invoice_id(session: Session, invoice_id: uuid.UUID) -> list[Payment]:
+async def list_payments_by_invoice_id(session: AsyncSession, invoice_id: uuid.UUID) -> list[Payment]:
     stmt = select(Payment).where(Payment.invoice_id == invoice_id)
-    return list(session.scalars(stmt))
+    result = await session.scalars(stmt)
+    return list(result)
 
 
-def list_payments_by_invoice_ids(session: Session, invoice_ids: Sequence[uuid.UUID]) -> list[Payment]:
+async def list_payments_by_invoice_ids(session: AsyncSession, invoice_ids: Sequence[uuid.UUID]) -> list[Payment]:
     if not invoice_ids:
         return []
     stmt = select(Payment).where(Payment.invoice_id.in_(invoice_ids))
-    return list(session.scalars(stmt))
+    result = await session.scalars(stmt)
+    return list(result)
 
 
-def update_payment(
-    session: Session,
+async def update_payment(
+    session: AsyncSession,
     payment_id: uuid.UUID,
     data: PaymentUpdate,
 ) -> Payment | None:
-    payment = get_payment_by_id(session, payment_id)
+    payment = await get_payment_by_id(session, payment_id)
     if payment is None:
         return None
 
@@ -66,16 +69,16 @@ def update_payment(
     if "paid_at" in data:
         payment.paid_at = data["paid_at"]
 
-    session.commit()
-    session.refresh(payment)
+    await session.commit()
+    await session.refresh(payment)
     return payment
 
 
-def delete_payment(session: Session, payment_id: uuid.UUID) -> bool:
-    payment = get_payment_by_id(session, payment_id)
+async def delete_payment(session: AsyncSession, payment_id: uuid.UUID) -> bool:
+    payment = await get_payment_by_id(session, payment_id)
     if payment is None:
         return False
 
-    session.delete(payment)
-    session.commit()
+    await session.delete(payment)
+    await session.commit()
     return True

@@ -4,7 +4,7 @@ from datetime import date
 from decimal import Decimal
 
 import pytest
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dal.invoice import create_invoice
 from app.dal.payment import create_payment
@@ -19,11 +19,12 @@ from app.services.use_cases import GetSchoolStatement, GetStudentStatement
 
 
 @pytest.mark.integration
-def test_statements_with_real_postgres_support_partial_paid_and_credit(db_session: Session) -> None:
-    school = create_school(db_session, data={"name": "Integration Academy"})
-    student = create_student(db_session, data={"school_id": school.id, "full_name": "Integration Student"})
+@pytest.mark.anyio
+async def test_statements_with_real_postgres_support_partial_paid_and_credit(db_session: AsyncSession) -> None:
+    school = await create_school(db_session, data={"name": "Integration Academy"})
+    student = await create_student(db_session, data={"school_id": school.id, "full_name": "Integration Student"})
 
-    pending_invoice = create_invoice(
+    pending_invoice = await create_invoice(
         db_session,
         data={
             "student_id": student.id,
@@ -32,7 +33,7 @@ def test_statements_with_real_postgres_support_partial_paid_and_credit(db_sessio
             "description": "Pending",
         },
     )
-    partial_invoice = create_invoice(
+    partial_invoice = await create_invoice(
         db_session,
         data={
             "student_id": student.id,
@@ -41,7 +42,7 @@ def test_statements_with_real_postgres_support_partial_paid_and_credit(db_sessio
             "description": "Partial",
         },
     )
-    paid_invoice = create_invoice(
+    paid_invoice = await create_invoice(
         db_session,
         data={
             "student_id": student.id,
@@ -50,7 +51,7 @@ def test_statements_with_real_postgres_support_partial_paid_and_credit(db_sessio
             "description": "Paid",
         },
     )
-    credit_invoice = create_invoice(
+    credit_invoice = await create_invoice(
         db_session,
         data={
             "student_id": student.id,
@@ -60,11 +61,11 @@ def test_statements_with_real_postgres_support_partial_paid_and_credit(db_sessio
         },
     )
 
-    create_payment(db_session, data={"invoice_id": partial_invoice.id, "amount": Decimal("50.00")})
-    create_payment(db_session, data={"invoice_id": paid_invoice.id, "amount": Decimal("60.00")})
-    create_payment(db_session, data={"invoice_id": credit_invoice.id, "amount": Decimal("50.00")})
+    await create_payment(db_session, data={"invoice_id": partial_invoice.id, "amount": Decimal("50.00")})
+    await create_payment(db_session, data={"invoice_id": paid_invoice.id, "amount": Decimal("60.00")})
+    await create_payment(db_session, data={"invoice_id": credit_invoice.id, "amount": Decimal("50.00")})
 
-    student_statement = GetStudentStatement(
+    student_statement = await GetStudentStatement(
         student_repo=SQLAlchemyStudentRepo(db_session),
         invoice_repo=SQLAlchemyInvoiceRepo(db_session),
         payment_repo=SQLAlchemyPaymentRepo(db_session),
@@ -82,7 +83,7 @@ def test_statements_with_real_postgres_support_partial_paid_and_credit(db_sessio
     assert invoice_statuses[paid_invoice.id] == InvoiceStatus.PAID
     assert invoice_statuses[credit_invoice.id] == InvoiceStatus.CREDIT
 
-    school_statement = GetSchoolStatement(
+    school_statement = await GetSchoolStatement(
         school_repo=SQLAlchemySchoolRepo(db_session),
         student_repo=SQLAlchemyStudentRepo(db_session),
         invoice_repo=SQLAlchemyInvoiceRepo(db_session),

@@ -2,7 +2,7 @@
 
 - Payments are first-class: invoices can have multiple payments (partial payments supported).
 - Invoice status is derived from payments; overpaid invoices use `CREDIT` status (PENDING/PARTIAL/PAID/CREDIT via `InvoiceStatus` enum).
-- DAL is the only layer touching SQLAlchemy `Session`; services orchestrate DAL and apply business rules.
+- DAL is the only layer touching SQLAlchemy `AsyncSession`; services orchestrate DAL and apply business rules.
 - Primary keys for School/Student/Invoice/Payment use UUIDv7; all related foreign keys are UUID.
 - DAL create/update inputs use TypedDict payloads (not many function params).
 - Auth is demo-basic JWT with a role claim (admin). No user table unless required.
@@ -20,4 +20,6 @@
 - Domain-level errors (`DomainError`, `NotFoundError`, `ConflictError`) are the cross-layer error contract; FastAPI maps them to HTTP in one global handler module.
 - Services depend on repo ports (`Protocol`) and DTOs, while SQLAlchemy implementations live in DAL adapters (`app/dal/repos/*`).
 - Statement generation and invoice-payments listing are explicit use-cases wired through FastAPI dependencies for testability without DB access.
-- DB-backed FastAPI path handlers must be synchronous (`def`) when using sync SQLAlchemy repositories/services; keep `async def` only for non-blocking endpoints (e.g., in-memory health/metrics).
+- Runtime DB access uses SQLAlchemy 2.x async API with `postgresql+asyncpg`; DB-backed FastAPI path handlers are async (`async def`) and await service/use-case calls.
+- Engine/session initialization is lazy in `app/db/session.py` so smoke tests can import app modules without requiring a live DB driver; runtime still requires `asyncpg`.
+- Alembic keeps synchronous migration execution by rewriting runtime async DB URL driver to `postgresql+psycopg` inside `alembic/env.py`.

@@ -12,7 +12,7 @@ async def health() -> dict[str, str]:
 
 
 @router.get("/health/db")
-def health_db() -> dict[str, str]:
-    with SessionLocal() as session:
-        session.execute(text("SELECT 1"))
+async def health_db() -> dict[str, str]:
+    async with SessionLocal() as session:
+        await session.execute(text("SELECT 1"))
     return {"status": "ok"}

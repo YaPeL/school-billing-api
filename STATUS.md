@@ -13,7 +13,7 @@
   - docker compose up --build
 - Tests:
   - poetry run pytest -m smoke
-  - export TEST_DATABASE_URL=postgresql+psycopg://school_billing:school_billing@localhost:5432/school_billing_test
+  - export TEST_DATABASE_URL=postgresql+asyncpg://school_billing:school_billing@localhost:5432/school_billing_test
   - poetry run pytest -m integration (optional, real DB)
 - CI:
   - GitHub Actions workflow on push/PR to `main` (Python 3.12, ruff, mypy, smoke)
@@ -63,7 +63,14 @@
   - SQLAlchemy repo adapters in `app/dal/repos/`
   - Statement and invoice-payment listing moved to explicit use-cases with dependency wiring in `app/api/deps.py`
   - Global domain exception registration centralized in `app/api/exception_handlers.py`
-- DB-backed route handlers in `app/api/schools.py`, `app/api/students.py`, `app/api/invoices.py`, and `app/api/payments.py` are synchronous (`def`), ensuring sync SQLAlchemy work runs in FastAPI's threadpool instead of the event loop
+- Runtime DB stack migrated to async SQLAlchemy 2.0:
+  - `app/db/session.py` now uses `create_async_engine`, `async_sessionmaker`, and async `get_db` dependency
+  - DAL modules and SQLAlchemy repo adapters now use `AsyncSession` and awaited SQLAlchemy calls
+  - Service and use-case call chains are async/await, preserving Router -> Services -> DAL layering
+  - DB-backed API route handlers are async (`async def`) and await service/use-case operations
+  - `/health/db`, DB seed script, and integration fixtures use async session patterns
+  - Alembic env converts async runtime URL (`postgresql+asyncpg`) to sync driver (`postgresql+psycopg`) for migrations
+  - Smoke tests were updated to async mocks (`AsyncMock`) and continue running without DB access (`26 passed`)
 
 ## Pending
 - Statement caching design: define what to cache and invalidation strategy when invoices/payments change

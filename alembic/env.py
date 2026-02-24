@@ -4,6 +4,7 @@ from __future__ import annotations
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
+from sqlalchemy.engine import make_url
 
 import app.models  # noqa: F401
 from alembic import context
@@ -11,7 +12,10 @@ from app.core.settings import settings
 from app.db.base import Base
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.database_url)
+sync_url = make_url(settings.database_url)
+if sync_url.drivername == "postgresql+asyncpg":
+    sync_url = sync_url.set(drivername="postgresql+psycopg")
+config.set_main_option("sqlalchemy.url", str(sync_url))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

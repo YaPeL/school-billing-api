@@ -74,8 +74,12 @@
 - Invoice/payment movement model upgraded:
   - Invoice `status` persisted in DB (`PENDING`/`PARTIAL`/`PAID`) and included in API reads
   - Payment `kind` persisted in DB (`PAYMENT`/`REFUND`) and accepted in `POST/PATCH /payments`
-  - Service-level validation rejects overpayment and over-refund with domain `ConflictError` (HTTP 409)
-  - Statement schemas/calculation now use net paid (`payments - refunds`) and removed credit fields
+  - Service-level validation now blocks state-breaking movements with explicit messages:
+    - `"payment amount exceeds remaining balance"`
+    - `"refund amount exceeds net paid amount"`
+  - Invoice status recalculation uses net paid (`payments - refunds`) after payment create/update/delete
+  - Invoice reads and statement responses now expose `payments_total`, `refunds_total`, `paid_total` (net), and balance fields
+  - `PATCH /payments/{id}` with `{"kind": null}` is rejected as a clean validation error (422), not a 500
 
 ## Pending
 - Statement caching design: define what to cache and invalidation strategy when invoices/payments change

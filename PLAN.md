@@ -58,4 +58,4 @@
 - [ ] TODO: statement caching strategy (cache targets + invalidation plan)
 
 ## 9. Billing movements hardening
-- [x] Persist invoice status (`PENDING`/`PARTIAL`/`PAID`) + add typed payment movement kind (`PAYMENT`/`REFUND`) across model/schema/service/API with overpay/over-refund validation
+- [x] Persist invoice status (`PENDING`/`PARTIAL`/`PAID`) + add typed payment movement kind (`PAYMENT`/`REFUND`) across model/schema/service/API with strict overpay/over-refund validation and computed movement totals in invoice/statement responses

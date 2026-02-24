@@ -8,6 +8,8 @@ from app.schemas.base import SchemaModel
 
 class StatementTotals(SchemaModel):
     invoiced_total: Decimal
+    payments_total: Decimal
+    refunds_total: Decimal
     paid_total: Decimal
     balance_due_total: Decimal
 
@@ -18,6 +20,8 @@ class InvoiceSummary(SchemaModel):
     total_amount: Decimal
     due_date: date
     description: str | None = None
+    payments_total: Decimal
+    refunds_total: Decimal
     paid_total: Decimal
     balance_due: Decimal
     status: InvoiceStatus

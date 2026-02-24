@@ -10,6 +10,7 @@ class InvoiceCreate(SchemaModel):
     student_id: UUID
     total_amount: PositiveAmount
     due_date: date
+    description: str | None = None
 
 
 class InvoiceUpdate(SchemaModel):
